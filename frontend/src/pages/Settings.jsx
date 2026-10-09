@@ -57,7 +57,7 @@ export default function Settings() {
           <h2><Server size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Backend Connection</h2>
         </div>
         <div className="panel-body">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="form-grid-2 mb-16">
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>API Base URL (VITE_API_BASE_URL)</label>
               <input
@@ -86,7 +86,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>Current Data Mode</label>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -214,7 +214,7 @@ export default function Settings() {
           <h2><Bell size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Notification Preferences</h2>
         </div>
         <div className="panel-body" style={{ padding: '12px 14px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="checkbox-grid">
             {[
               { key: 'tempExcursion', label: 'Temperature excursion alerts' },
               { key: 'sensorOffline', label: 'Sensor offline alerts' },
@@ -241,7 +241,7 @@ export default function Settings() {
           <h2><User size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Operator Profile</h2>
         </div>
         <div className="panel-body" style={{ padding: '8px 14px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="form-grid-2">
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>Operator ID</label>
               <input className="input" style={{ width: '100%' }} value={config.operatorId} onChange={(e) => setConfig({ ...config, operatorId: e.target.value })} />

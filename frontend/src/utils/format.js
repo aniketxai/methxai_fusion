@@ -1,4 +1,4 @@
-// Formatting utilities for MethXAI
+
 
 export function formatTemp(value) {
   return `${value.toFixed(1)}°C`;

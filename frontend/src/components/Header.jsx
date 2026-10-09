@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Circle, User } from 'lucide-react';
+import PropTypes from 'prop-types';
+import { Circle, User, Menu } from 'lucide-react';
 import { api } from '../services/api.js';
 import { socketService } from '../services/socket.js';
 
-export default function Header() {
+export default function Header({ onToggleSidebar }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -17,9 +18,21 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="header-brand">
-        <div className="header-title">MethXAI</div>
-        <div className="header-subtitle">Cold Chain Monitoring System</div>
+      <div className="header-brand-group">
+        <button
+          className="sidebar-toggle"
+          onClick={onToggleSidebar}
+          aria-label="Toggle navigation menu"
+        >
+          <Menu size={18} />
+        </button>
+        <div className="header-brand">
+          <img src="/logo.jpg" alt="MethXAI Logo" className="header-logo" />
+          <div className="header-titles">
+            <div className="header-title">MethXAI</div>
+            <div className="header-subtitle">Cold Chain Monitoring System</div>
+          </div>
+        </div>
       </div>
       <div className="header-right">
         <div className={`conn-indicator ${statusClass}`}>
@@ -45,3 +58,8 @@ export default function Header() {
     </header>
   );
 }
+
+Header.propTypes = {
+  onToggleSidebar: PropTypes.func,
+};
+

@@ -222,12 +222,12 @@ export default function Reports() {
               <div className="text-muted" style={{ fontSize: 11, marginBottom: 12 }}>
                 Verify a batch against cold-chain status before dispensing. The frontend requests verification from the backend — it does not directly control hardware.
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+              <div className="verify-form-group">
                 <select
                   className="select"
                   value={selectedVerifyBatch}
                   onChange={(e) => setSelectedVerifyBatch(e.target.value)}
-                  style={{ minWidth: 200 }}
+                  style={{ flex: 1 }}
                 >
                   {batches?.map((b) => (
                     <option key={b.batchId} value={b.batchId}>{b.batchId} — {b.product}</option>

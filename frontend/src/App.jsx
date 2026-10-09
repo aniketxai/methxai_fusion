@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
+import LoadingScreen from './components/LoadingScreen.jsx';
 import Overview from './pages/Overview.jsx';
 import LiveShipments from './pages/LiveShipments.jsx';
 import ShipmentDetail from './pages/ShipmentDetail.jsx';
@@ -15,6 +15,18 @@ import './styles/global.css';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [appLoading, setAppLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (appLoading) {
+    return <LoadingScreen message="Connecting to telemetry sensors..." />;
+  }
 
   return (
     <div className="app-shell">
@@ -28,12 +40,7 @@ function App() {
         />
       )}
       <div className="app-main">
-        <Header />
-        <div className="header-mobile-bar">
-          <div className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <Menu size={16} />
-          </div>
-        </div>
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <main className="app-content">
           <Routes>
             <Route path="/" element={<Overview />} />
