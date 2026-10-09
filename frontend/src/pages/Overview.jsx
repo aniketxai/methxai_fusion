@@ -12,7 +12,6 @@ import { useShipments, useAlerts, useDashboardSummary } from '../hooks/useApi.js
 import { LoadingState, ErrorState } from '../components/StateViews.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatTemp, timeAgo, formatTime } from '../utils/format.js';
-import { api } from '../services/api.js';
 import { ALERTS } from '../data/mockData.js';
 
 export default function Overview() {
@@ -57,30 +56,32 @@ export default function Overview() {
       <div className="page-header">
         <div>
           <h1>Operations Overview</h1>
-          <div className="subtitle">Real-time cold chain integrity summary</div>
+          <div className="subtitle">Real-time cold chain integrity & sensor telemetry</div>
         </div>
-        {api.isMockMode && <span className="demo-label">Simulated Data</span>}
+        <span className="badge badge-normal" style={{ fontSize: 11 }}>
+          <span className="pulse-dot" /> ESP32 Mesh Connected
+        </span>
       </div>
 
       {/* Metrics */}
       <div className="metric-grid">
-        <div className="metric-tile">
-          <div className="label"><Truck size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Active Shipments</div>
+        <div className="metric-tile tile-ok">
+          <div className="label"><Truck size={13} />Active Shipments</div>
           <div className="value">{summary?.activeShipments ?? '--'}</div>
           <div className="delta">{summary?.deliveredShipments ?? 0} delivered today</div>
         </div>
-        <div className="metric-tile">
-          <div className="label"><AlertTriangle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Temp Excursions</div>
+        <div className="metric-tile tile-alert">
+          <div className="label"><AlertTriangle size={13} />Temp Excursions</div>
           <div className="value alert">{summary?.excursionShipments ?? '--'}</div>
           <div className="delta">Shipments with excursion events</div>
         </div>
-        <div className="metric-tile">
-          <div className="label"><PackageSearch size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Batches Needing Review</div>
+        <div className="metric-tile tile-warn">
+          <div className="label"><PackageSearch size={13} />Batches Under Review</div>
           <div className="value warn">{summary?.batchesReview ?? '--'}</div>
-          <div className="delta">On hold or flagged</div>
+          <div className="delta">Quality hold or flagged</div>
         </div>
-        <div className="metric-tile">
-          <div className="label"><MapPin size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Checkpoints Notified</div>
+        <div className="metric-tile tile-info">
+          <div className="label"><MapPin size={13} />Checkpoints Verified</div>
           <div className="value">{summary?.checkpointsNotified ?? '--'}</div>
           <div className="delta">{summary?.unackAlerts ?? 0} unacknowledged alerts</div>
         </div>

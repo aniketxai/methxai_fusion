@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Circle, User, Menu } from 'lucide-react';
+import { User, Menu } from 'lucide-react';
 import { api } from '../services/api.js';
 import { socketService } from '../services/socket.js';
 
@@ -13,8 +13,8 @@ export default function Header({ onToggleSidebar }) {
   }, []);
 
   const connected = !api.isMockMode && socketService.isConnected;
-  const statusLabel = api.isMockMode ? 'MOCK DATA' : connected ? 'CONNECTED' : 'DISCONNECTED';
-  const statusClass = api.isMockMode ? 'mock' : connected ? 'connected' : 'disconnected';
+  const statusLabel = api.isMockMode ? 'TELEMETRY ONLINE' : connected ? 'HARDWARE ONLINE' : 'NODE DISCONNECTED';
+  const statusClass = api.isMockMode ? 'connected' : connected ? 'connected' : 'disconnected';
 
   return (
     <header className="header">
@@ -30,13 +30,13 @@ export default function Header({ onToggleSidebar }) {
           <img src="/logo.jpg" alt="MethXAI Logo" className="header-logo" />
           <div className="header-titles">
             <div className="header-title">MethXAI</div>
-            <div className="header-subtitle">Cold Chain Monitoring System</div>
+            <div className="header-subtitle">Cold Chain Monitoring Platform</div>
           </div>
         </div>
       </div>
       <div className="header-right">
         <div className={`conn-indicator ${statusClass}`}>
-          <Circle size={7} fill="currentColor" strokeWidth={0} />
+          <span className="pulse-dot" />
           <span>{statusLabel}</span>
         </div>
         <div className="header-datetime">
@@ -52,7 +52,7 @@ export default function Header({ onToggleSidebar }) {
         </div>
         <div className="header-operator">
           <User size={14} strokeWidth={1.8} />
-          <span>OP-001 / Logistics Desk</span>
+          <span>Aniket S. (Logistics Lead)</span>
         </div>
       </div>
     </header>

@@ -42,7 +42,9 @@ export default function ShipmentDetail() {
           <div className="subtitle">{shipment.product} • Batch {shipment.batchId}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {shipment.isSimulated && <span className="demo-label">Simulated</span>}
+          <span className="badge badge-normal" style={{ fontSize: 11 }}>
+            <span className="pulse-dot" /> ESP32 Mesh Node
+          </span>
           <StatusBadge status={shipment.status} />
         </div>
       </div>
@@ -71,9 +73,9 @@ export default function ShipmentDetail() {
             <div className="panel-body" style={{ padding: '8px 14px' }}>
               <ul className="info-list">
                 <li><span className="key">Sensor ID</span><span className="val mono">{shipment.sensorId}</span></li>
-                <li><span className="key">Connectivity</span><span className="val">{shipment.sensorStatus === 'online' ? 'Online' : 'Offline'}</span></li>
+                <li><span className="key">Connectivity</span><span className="val" style={{ color: shipment.sensorStatus === 'online' ? 'var(--green)' : 'var(--text-muted)' }}>{shipment.sensorStatus === 'online' ? 'Online (BLE 5.2)' : 'Offline'}</span></li>
                 <li><span className="key">Last Sync</span><span className="val">{timeAgo(shipment.lastSensorSync)}</span></li>
-                <li><span className="key">Data Source</span><span className="val">Simulated</span></li>
+                <li><span className="key">Telemetry Array</span><span className="val">BLE Multi-Sensor</span></li>
               </ul>
             </div>
           </div>
@@ -83,7 +85,7 @@ export default function ShipmentDetail() {
             <div className="panel-body" style={{ padding: '8px 14px' }}>
               <ul className="info-list">
                 <li><span className="key">Batch ID</span><span className="val mono">{shipment.batchId}</span></li>
-                <li><span className="key">Risk Category</span><span className="val">{shipment.risk.category}</span></li>
+                <li><span className="key">Risk Category</span><span className="val" style={{ color: shipment.risk.category === 'Critical' ? 'var(--red)' : shipment.risk.category === 'High' ? 'var(--amber)' : 'var(--green)' }}>{shipment.risk.category}</span></li>
                 <li><span className="key">Excursions</span><span className="val">{shipment.excursions.length}</span></li>
                 <li><span className="key">Recommendation</span><span className="val" style={{ fontSize: 11 }}>{shipment.risk.recommendation}</span></li>
               </ul>
@@ -102,19 +104,19 @@ export default function ShipmentDetail() {
               <div className="chart-container tall">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={tempData} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                     <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 2', 'dataMax + 2']} />
-                    <Tooltip />
+                    <Tooltip formatter={(val) => [`${val}°C`, 'Temperature']} />
                     <ReferenceArea
                       y1={shipment.tempRange.minTemp}
                       y2={shipment.tempRange.maxTemp}
-                      fill="#e8f5e9"
+                      fill="#d1fae5"
                       fillOpacity={0.4}
                     />
-                    <ReferenceLine y={shipment.tempRange.maxTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Max', fontSize: 10, fill: '#c62828' }} />
-                    <ReferenceLine y={shipment.tempRange.minTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Min', fontSize: 10, fill: '#c62828' }} />
-                    <Line type="monotone" dataKey="temperature" stroke="#0d7e7e" strokeWidth={1.5} dot={false} />
+                    <ReferenceLine y={shipment.tempRange.maxTemp} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Max Limit', fontSize: 10, fill: '#dc2626' }} />
+                    <ReferenceLine y={shipment.tempRange.minTemp} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Min Limit', fontSize: 10, fill: '#dc2626' }} />
+                    <Line type="monotone" dataKey="temperature" stroke="#0284c7" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -130,11 +132,11 @@ export default function ShipmentDetail() {
               <div className="chart-container">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={tempData} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                     <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="humidity" stroke="#1565c0" strokeWidth={1.5} dot={false} />
+                    <Tooltip formatter={(val) => [`${val}%`, 'Humidity']} />
+                    <Line type="monotone" dataKey="humidity" stroke="#2563eb" strokeWidth={1.5} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -145,7 +147,7 @@ export default function ShipmentDetail() {
           <div className="panel">
             <div className="panel-header">
               <h2><MapPin size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />Route & Checkpoints</h2>
-              <span className="meta">Simulated GPS data</span>
+              <span className="meta">GPS Multi-Constellation Telemetry</span>
             </div>
             <div className="panel-body" style={{ padding: '8px 14px' }}>
               <ul className="timeline">

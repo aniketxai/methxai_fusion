@@ -33,8 +33,8 @@ export default function Sidebar() {
         })}
       </nav>
       <div className="sidebar-footer">
-        <div className="sidebar-footer-label">IOT-03 Demo Build</div>
-        <div className="sidebar-footer-sub">Hackathon Prototype</div>
+        <div className="sidebar-footer-label">MethXAI Platform v1.4</div>
+        <div className="sidebar-footer-sub">ESP32 Telemetry Mesh</div>
       </div>
     </aside>
   );

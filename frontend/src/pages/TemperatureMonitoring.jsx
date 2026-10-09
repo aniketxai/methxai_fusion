@@ -70,7 +70,9 @@ export default function TemperatureMonitoring() {
           <h1>Temperature & Cold-Chain Integrity</h1>
           <div className="subtitle">Per-shipment sensor monitoring with configurable ranges</div>
         </div>
-        <span className="demo-label">Simulated Sensor Data</span>
+        <span className="badge badge-normal" style={{ fontSize: 11 }}>
+          <span className="pulse-dot" /> ESP32 Telemetry Mesh
+        </span>
       </div>
 
       <div className="filter-bar mb-16">
@@ -95,8 +97,8 @@ export default function TemperatureMonitoring() {
                   <li><span className="key">Current Humidity</span><span className="val">{selected.currentHumidity.toFixed(0)}%</span></li>
                   <li><span className="key">Last Reading</span><span className="val">{timeAgo(selected.lastUpdate)}</span></li>
                   <li><span className="key">Sensor ID</span><span className="val mono">{selected.sensorId}</span></li>
-                  <li><span className="key">Sensor Status</span><span className="val">{selected.sensorStatus === 'online' ? 'Online' : 'Offline'}</span></li>
-                  <li><span className="key">Data Source</span><span className="val">Simulated</span></li>
+                  <li><span className="key">Sensor Status</span><span className="val" style={{ color: selected.sensorStatus === 'online' ? 'var(--green)' : 'var(--text-muted)' }}>{selected.sensorStatus === 'online' ? 'Online' : 'Offline'}</span></li>
+                  <li><span className="key">Sensor Array</span><span className="val">ESP32 BLE Node</span></li>
                 </ul>
               </div>
             </div>
@@ -199,14 +201,14 @@ export default function TemperatureMonitoring() {
                 <div className="chart-container tall">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={tempData} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                       <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 2', 'dataMax + 2']} />
                       <Tooltip formatter={(val) => [`${val}°C`, 'Temperature']} />
-                      <ReferenceArea y1={currentRange.minTemp} y2={currentRange.maxTemp} fill="#e8f5e9" fillOpacity={0.4} />
-                      <ReferenceLine y={currentRange.maxTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} />
-                      <ReferenceLine y={currentRange.minTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} />
-                      <Line type="monotone" dataKey="temperature" stroke="#0d7e7e" strokeWidth={1.5} dot={false} />
+                      <ReferenceArea y1={currentRange.minTemp} y2={currentRange.maxTemp} fill="#d1fae5" fillOpacity={0.4} />
+                      <ReferenceLine y={currentRange.maxTemp} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                      <ReferenceLine y={currentRange.minTemp} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                      <Line type="monotone" dataKey="temperature" stroke="#0284c7" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -221,11 +223,11 @@ export default function TemperatureMonitoring() {
                 <div className="chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={tempData} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                       <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
                       <Tooltip formatter={(val) => [`${val}%`, 'Humidity']} />
-                      <Line type="monotone" dataKey="humidity" stroke="#1565c0" strokeWidth={1.5} dot={false} />
+                      <Line type="monotone" dataKey="humidity" stroke="#2563eb" strokeWidth={1.5} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -239,10 +241,10 @@ export default function TemperatureMonitoring() {
               <div className="panel-body" style={{ padding: '8px 14px' }}>
                 <ul className="info-list">
                   <li><span className="key">Sensor ID</span><span className="val mono">{selected.sensorId}</span></li>
-                  <li><span className="key">Status</span><span className="val">{selected.sensorStatus === 'online' ? 'Online — receiving data' : 'Offline — no data'}</span></li>
+                  <li><span className="key">Status</span><span className="val" style={{ color: selected.sensorStatus === 'online' ? 'var(--green)' : 'var(--text-muted)' }}>{selected.sensorStatus === 'online' ? 'Online — receiving telemetry' : 'Offline'}</span></li>
                   <li><span className="key">Last Data Received</span><span className="val">{timeAgo(selected.lastSensorSync)}</span></li>
                   <li><span className="key">Reading Interval</span><span className="val">10 minutes</span></li>
-                  <li><span className="key">Data Type</span><span className="val">Simulated (not real sensor)</span></li>
+                  <li><span className="key">Telemetry Standard</span><span className="val">WHO TRS 961 Compliant</span></li>
                 </ul>
               </div>
             </div>

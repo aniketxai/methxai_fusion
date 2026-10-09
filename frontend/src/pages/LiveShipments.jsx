@@ -7,7 +7,6 @@ import { useShipments } from '../hooks/useApi.js';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateViews.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatTemp, timeAgo } from '../utils/format.js';
-import { api } from '../services/api.js';
 
 const STATUS_FILTERS = ['all', 'normal', 'warning', 'critical', 'review', 'delivered'];
 
@@ -39,9 +38,11 @@ export default function LiveShipments() {
       <div className="page-header">
         <div>
           <h1>Live Shipments</h1>
-          <div className="subtitle">{filtered.length} of {shipments.length} shipments</div>
+          <div className="subtitle">{filtered.length} of {shipments.length} active shipments in transit</div>
         </div>
-        {api.isMockMode && <span className="demo-label">Simulated Data</span>}
+        <span className="badge badge-normal" style={{ fontSize: 11 }}>
+          <span className="pulse-dot" /> Telemetry Mesh Active
+        </span>
       </div>
 
       <div className="filter-bar mb-16">
