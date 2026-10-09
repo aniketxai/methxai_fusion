@@ -14,13 +14,6 @@ const navItems = [
 export default function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">
-        <img src="/logo.jpg" alt="MethXAI Logo" className="sidebar-logo" />
-        <div>
-          <span className="brand-name">MethXAI</span>
-          <span className="brand-tag">Cold Chain v1.0</span>
-        </div>
-      </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => {
           const Icon = item.icon;
