@@ -1,25 +1,35 @@
 // Reports — summary of shipments, batches, excursions, dispenser integration status
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useShipments, useBatches, useCheckpoints } from '../hooks/useApi.js';
 import { LoadingState, ErrorState } from '../components/StateViews.jsx';
-import { formatDateTime, formatDate } from '../utils/format.js';
+import { formatDateTime } from '../utils/format.js';
 import { api } from '../services/api.js';
 import { DISPENSER_STATUS } from '../data/mockData.js';
 import { Cpu, Download, FlaskConical, CheckCircle, XCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 export default function Reports() {
   const { data: shipments, loading: sLoading, error: sError } = useShipments();
   const { data: batches, loading: bLoading } = useBatches();
   const { data: checkpoints, loading: cLoading } = useCheckpoints();
   const [dispenser, setDispenser] = useState(DISPENSER_STATUS);
+  const [selectedVerifyBatch, setSelectedVerifyBatch] = useState('');
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    api.getDispenserStatus().then(setDispenser);
+    let mounted = true;
+    api.getDispenserStatus().then((res) => {
+      if (mounted && res) setDispenser(res);
+    }).catch(console.error);
+    return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (batches && batches.length > 0 && !selectedVerifyBatch) {
+      setSelectedVerifyBatch(batches[0].batchId);
+    }
+  }, [batches, selectedVerifyBatch]);
 
   const reportData = useMemo(() => {
     if (!shipments || !batches) return null;
@@ -47,10 +57,14 @@ export default function Reports() {
   if (sError) return <ErrorState message={sError} />;
 
   function handleVerify(batchId) {
+    if (!batchId) return;
     setVerifying(true);
     setVerifyResult(null);
     api.verifyBatch(batchId).then((result) => {
       setVerifyResult(result);
+      setVerifying(false);
+    }).catch((err) => {
+      setVerifyResult({ verified: false, message: err.message || 'Verification failed' });
       setVerifying(false);
     });
   }
@@ -59,7 +73,16 @@ export default function Reports() {
     if (!shipments) return;
     const headers = ['Shipment ID', 'Product', 'Batch ID', 'Current Temp', 'Humidity', 'Origin', 'Checkpoint', 'Last Update', 'Status', 'Excursions'];
     const rows = shipments.map((s) => [
-      s.id, s.product, s.batchId, s.currentTemp, s.currentHumidity, s.origin, s.currentCheckpoint, s.lastUpdate, s.status, s.excursions.length,
+      s.id,
+      `"${s.product.replace(/"/g, '""')}"`,
+      s.batchId,
+      s.currentTemp,
+      s.currentHumidity,
+      `"${s.origin.replace(/"/g, '""')}"`,
+      `"${s.currentCheckpoint.replace(/"/g, '""')}"`,
+      s.lastUpdate,
+      s.status,
+      s.excursions.length,
     ]);
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -200,15 +223,20 @@ export default function Reports() {
                 Verify a batch against cold-chain status before dispensing. The frontend requests verification from the backend — it does not directly control hardware.
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                <select className="select" id="batchVerifySelect" style={{ minWidth: 200 }}>
+                <select
+                  className="select"
+                  value={selectedVerifyBatch}
+                  onChange={(e) => setSelectedVerifyBatch(e.target.value)}
+                  style={{ minWidth: 200 }}
+                >
                   {batches?.map((b) => (
                     <option key={b.batchId} value={b.batchId}>{b.batchId} — {b.product}</option>
                   ))}
                 </select>
                 <button
                   className="btn btn-primary btn-sm"
-                  disabled={verifying}
-                  onClick={() => handleVerify(document.getElementById('batchVerifySelect').value)}
+                  disabled={verifying || !selectedVerifyBatch}
+                  onClick={() => handleVerify(selectedVerifyBatch)}
                 >
                   {verifying ? 'Verifying...' : 'Verify Batch'}
                 </button>
@@ -234,3 +262,4 @@ export default function Reports() {
     </div>
   );
 }
+

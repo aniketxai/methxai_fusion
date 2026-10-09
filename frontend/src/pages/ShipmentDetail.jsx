@@ -9,7 +9,8 @@ import { ArrowLeft, Thermometer, Droplets, MapPin, AlertTriangle, Cpu, Package }
 import { useShipment } from '../hooks/useApi.js';
 import { LoadingState, ErrorState } from '../components/StateViews.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { formatTemp, formatDateTime, timeAgo } from '../utils/format.js';
+import { formatDateTime, timeAgo } from '../utils/format.js';
+
 
 export default function ShipmentDetail() {
   const { id } = useParams();

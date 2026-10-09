@@ -9,11 +9,14 @@ import {
   CHECKPOINT_LOGS,
   DISPENSER_STATUS,
   getDashboardSummary,
-  PRODUCTS,
 } from '../data/mockData.js';
+import { getStoredProductRanges, getStoredConfig } from '../utils/productStore.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const USE_MOCK = !API_BASE_URL;
+function getApiConfig() {
+  const config = getStoredConfig();
+  const isMock = config.dataMode === 'mock' || !config.apiBaseUrl;
+  return { baseUrl: config.apiBaseUrl, isMock };
+}
 
 // Simulate network latency for mock mode
 function mockDelay(data, ms = 200) {
@@ -21,10 +24,11 @@ function mockDelay(data, ms = 200) {
 }
 
 async function apiRequest(path, options = {}) {
-  if (USE_MOCK) {
+  const { baseUrl, isMock } = getApiConfig();
+  if (isMock) {
     return null; // caller handles mock fallback
   }
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${baseUrl}${path}`, {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
   });
@@ -35,28 +39,43 @@ async function apiRequest(path, options = {}) {
 }
 
 export const api = {
-  isMockMode: USE_MOCK,
+  get isMockMode() {
+    return getApiConfig().isMock;
+  },
 
   async getDashboardSummary() {
-    if (USE_MOCK) return mockDelay(getDashboardSummary());
+    if (this.isMockMode) return mockDelay(getDashboardSummary());
     return apiRequest('/api/dashboard/summary');
   },
 
   async getShipments() {
-    if (USE_MOCK) return mockDelay(SHIPMENTS);
+    if (this.isMockMode) {
+      const ranges = getStoredProductRanges();
+      // Apply configured ranges dynamically
+      const updatedShipments = SHIPMENTS.map((s) => ({
+        ...s,
+        tempRange: ranges[s.product] || s.tempRange,
+      }));
+      return mockDelay(updatedShipments);
+    }
     return apiRequest('/api/shipments');
   },
 
   async getShipment(id) {
-    if (USE_MOCK) {
+    if (this.isMockMode) {
+      const ranges = getStoredProductRanges();
       const s = SHIPMENTS.find((x) => x.id === id);
-      return mockDelay(s || null);
+      if (!s) return mockDelay(null);
+      return mockDelay({
+        ...s,
+        tempRange: ranges[s.product] || s.tempRange,
+      });
     }
     return apiRequest(`/api/shipments/${id}`);
   },
 
   async getShipmentReadings(id) {
-    if (USE_MOCK) {
+    if (this.isMockMode) {
       const s = SHIPMENTS.find((x) => x.id === id);
       return mockDelay(s ? s.readings : []);
     }
@@ -64,12 +83,12 @@ export const api = {
   },
 
   async getAlerts() {
-    if (USE_MOCK) return mockDelay(ALERTS);
+    if (this.isMockMode) return mockDelay(ALERTS);
     return apiRequest('/api/alerts');
   },
 
   async acknowledgeAlert(id) {
-    if (USE_MOCK) {
+    if (this.isMockMode) {
       const alert = ALERTS.find((a) => a.id === id);
       if (alert) alert.acknowledged = true;
       return mockDelay({ success: true });
@@ -78,7 +97,7 @@ export const api = {
   },
 
   async markAlertForReview(id) {
-    if (USE_MOCK) {
+    if (this.isMockMode) {
       const alert = ALERTS.find((a) => a.id === id);
       if (alert) {
         alert.acknowledged = true;
@@ -93,27 +112,27 @@ export const api = {
   },
 
   async getBatches() {
-    if (USE_MOCK) return mockDelay(BATCHES);
+    if (this.isMockMode) return mockDelay(BATCHES);
     return apiRequest('/api/batches');
   },
 
   async getCheckpoints() {
-    if (USE_MOCK) return mockDelay(CHECKPOINT_LOGS);
+    if (this.isMockMode) return mockDelay(CHECKPOINT_LOGS);
     return apiRequest('/api/checkpoints');
   },
 
   async getProducts() {
-    if (USE_MOCK) return mockDelay(PRODUCTS);
+    if (this.isMockMode) return mockDelay(getStoredProductRanges());
     return apiRequest('/api/products');
   },
 
   async getDispenserStatus() {
-    if (USE_MOCK) return mockDelay(DISPENSER_STATUS);
+    if (this.isMockMode) return mockDelay(DISPENSER_STATUS);
     return apiRequest('/api/dispenser/status');
   },
 
   async verifyBatch(batchId) {
-    if (USE_MOCK) {
+    if (this.isMockMode) {
       const batch = BATCHES.find((b) => b.batchId === batchId);
       return mockDelay({
         verified: batch ? batch.releaseStatus === 'RELEASED' : false,
@@ -128,3 +147,4 @@ export const api = {
     });
   },
 };
+

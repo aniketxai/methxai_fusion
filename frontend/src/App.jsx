@@ -29,7 +29,7 @@ function App() {
       )}
       <div className="app-main">
         <Header />
-        <div className="header-mobile-bar" style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <div className="header-mobile-bar">
           <div className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
             <Menu size={16} />
           </div>

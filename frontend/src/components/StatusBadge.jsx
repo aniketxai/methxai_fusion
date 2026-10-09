@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { getStatusLabel } from '../utils/format.js';
 
 export default function StatusBadge({ status }) {
@@ -19,6 +20,10 @@ export default function StatusBadge({ status }) {
     critical: 'badge-dot',
     review: 'badge-dot',
     delivered: 'badge-dot',
+    hold: 'badge-dot',
+    released: 'badge-dot',
+    clear: 'badge-dot',
+    flagged: 'badge-dot',
   };
 
   const dotColor = {
@@ -43,3 +48,8 @@ export default function StatusBadge({ status }) {
     </span>
   );
 }
+
+StatusBadge.propTypes = {
+  status: PropTypes.string,
+};
+

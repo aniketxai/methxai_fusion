@@ -1,6 +1,6 @@
 // Temperature Monitoring — per-shipment temperature/humidity charts with range config
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, ReferenceLine,
 } from 'recharts';
@@ -9,14 +9,22 @@ import { useShipments } from '../hooks/useApi.js';
 import { LoadingState, ErrorState } from '../components/StateViews.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatTemp, formatDateTime, timeAgo } from '../utils/format.js';
-import { PRODUCTS } from '../data/mockData.js';
+import { getStoredProductRanges, saveStoredProductRanges } from '../utils/productStore.js';
 
 export default function TemperatureMonitoring() {
   const { data: shipments, loading, error } = useShipments();
-  const [selectedId, setSelectedId] = useState('SHP-2410-004');
-  const [productConfig, setProductConfig] = useState(PRODUCTS);
+  const [selectedId, setSelectedId] = useState('');
+  const [productConfig, setProductConfig] = useState(getStoredProductRanges());
   const [editingProduct, setEditingProduct] = useState(null);
   const [editValues, setEditValues] = useState({ minTemp: 0, maxTemp: 0 });
+
+  useEffect(() => {
+    if (shipments && shipments.length > 0) {
+      if (!selectedId || !shipments.some((s) => s.id === selectedId)) {
+        setSelectedId(shipments[0].id);
+      }
+    }
+  }, [shipments, selectedId]);
 
   const selected = useMemo(
     () => shipments?.find((s) => s.id === selectedId) || shipments?.[0],
@@ -35,20 +43,22 @@ export default function TemperatureMonitoring() {
   if (loading) return <LoadingState message="Loading sensor data..." />;
   if (error) return <ErrorState message={error} />;
 
-  const currentRange = selected ? productConfig[selected.product] : null;
+  const currentRange = selected ? (productConfig[selected.product] || selected.tempRange) : null;
 
   function startEdit(productName) {
-    const cfg = productConfig[productName];
+    const cfg = productConfig[productName] || selected.tempRange;
     setEditingProduct(productName);
     setEditValues({ minTemp: cfg.minTemp, maxTemp: cfg.maxTemp });
   }
 
   function saveEdit() {
     if (editingProduct) {
-      setProductConfig({
+      const updated = {
         ...productConfig,
         [editingProduct]: { ...productConfig[editingProduct], ...editValues },
-      });
+      };
+      setProductConfig(updated);
+      saveStoredProductRanges(updated);
       setEditingProduct(null);
     }
   }
@@ -104,9 +114,21 @@ export default function TemperatureMonitoring() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <label style={{ fontSize: 12 }}>Min (°C)</label>
-                      <input className="input" type="number" value={editValues.minTemp} onChange={(e) => setEditValues({ ...editValues, minTemp: parseFloat(e.target.value) })} style={{ width: 80 }} />
+                      <input
+                        className="input"
+                        type="number"
+                        value={isNaN(editValues.minTemp) ? '' : editValues.minTemp}
+                        onChange={(e) => setEditValues({ ...editValues, minTemp: e.target.value === '' ? '' : parseFloat(e.target.value) })}
+                        style={{ width: 80 }}
+                      />
                       <label style={{ fontSize: 12 }}>Max (°C)</label>
-                      <input className="input" type="number" value={editValues.maxTemp} onChange={(e) => setEditValues({ ...editValues, maxTemp: parseFloat(e.target.value) })} style={{ width: 80 }} />
+                      <input
+                        className="input"
+                        type="number"
+                        value={isNaN(editValues.maxTemp) ? '' : editValues.maxTemp}
+                        onChange={(e) => setEditValues({ ...editValues, maxTemp: e.target.value === '' ? '' : parseFloat(e.target.value) })}
+                        style={{ width: 80 }}
+                      />
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save</button>
@@ -180,7 +202,7 @@ export default function TemperatureMonitoring() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
                       <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                       <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 2', 'dataMax + 2']} />
-                      <Tooltip />
+                      <Tooltip formatter={(val) => [`${val}°C`, 'Temperature']} />
                       <ReferenceArea y1={currentRange.minTemp} y2={currentRange.maxTemp} fill="#e8f5e9" fillOpacity={0.4} />
                       <ReferenceLine y={currentRange.maxTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} />
                       <ReferenceLine y={currentRange.minTemp} stroke="#c62828" strokeDasharray="4 4" strokeWidth={1} />
@@ -202,7 +224,7 @@ export default function TemperatureMonitoring() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
                       <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
                       <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 5', 'dataMax + 5']} />
-                      <Tooltip />
+                      <Tooltip formatter={(val) => [`${val}%`, 'Humidity']} />
                       <Line type="monotone" dataKey="humidity" stroke="#1565c0" strokeWidth={1.5} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -230,3 +252,4 @@ export default function TemperatureMonitoring() {
     </div>
   );
 }
+

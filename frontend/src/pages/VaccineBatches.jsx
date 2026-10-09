@@ -1,7 +1,7 @@
 // Vaccine Batches — inventory with cold-chain status, excursion history, release/hold
 
-import { useState, useMemo } from 'react';
-import { Search, Package, AlertTriangle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, AlertTriangle } from 'lucide-react';
 import { useBatches } from '../hooks/useApi.js';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateViews.jsx';
 import { formatDate, formatDateTime } from '../utils/format.js';
@@ -14,6 +14,17 @@ export default function VaccineBatches() {
   const [search, setSearch] = useState('');
   const [reviewFilter, setReviewFilter] = useState('all');
   const [selectedBatch, setSelectedBatch] = useState(null);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && selectedBatch) {
+        setSelectedBatch(null);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBatch]);
+
 
   const filtered = useMemo(() => {
     if (!batches) return [];

@@ -2,20 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Save, Server, Bell, Thermometer, User } from 'lucide-react';
-import { PRODUCTS } from '../data/mockData.js';
+import {
+  getStoredProductRanges,
+  saveStoredProductRanges,
+  getStoredConfig,
+  saveStoredConfig,
+} from '../utils/productStore.js';
 import { api } from '../services/api.js';
 import { socketService } from '../services/socket.js';
 
 export default function Settings() {
-  const [config, setConfig] = useState({
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
-    wsUrl: import.meta.env.VITE_WS_URL || '',
-    dataMode: api.isMockMode ? 'mock' : 'api',
-    refreshInterval: '10',
-    operatorName: 'OP-001 / Logistics Desk',
-    operatorId: 'OP-001',
-  });
-  const [productRanges, setProductRanges] = useState(PRODUCTS);
+  const [config, setConfig] = useState(getStoredConfig());
+  const [productRanges, setProductRanges] = useState(getStoredProductRanges());
   const [notifications, setNotifications] = useState({
     tempExcursion: true,
     sensorOffline: true,
@@ -25,12 +23,8 @@ export default function Settings() {
   });
   const [saved, setSaved] = useState(false);
 
-  // Load product ranges from localStorage if previously saved
+  // Load preferences from localStorage if previously saved
   useEffect(() => {
-    const saved = localStorage.getItem('methxai_product_ranges');
-    if (saved) {
-      try { setProductRanges(JSON.parse(saved)); } catch { /* ignore */ }
-    }
     const savedNotif = localStorage.getItem('methxai_notifications');
     if (savedNotif) {
       try { setNotifications(JSON.parse(savedNotif)); } catch { /* ignore */ }
@@ -38,9 +32,9 @@ export default function Settings() {
   }, []);
 
   function handleSave() {
-    localStorage.setItem('methxai_product_ranges', JSON.stringify(productRanges));
+    saveStoredProductRanges(productRanges);
+    saveStoredConfig(config);
     localStorage.setItem('methxai_notifications', JSON.stringify(notifications));
-    localStorage.setItem('methxai_config', JSON.stringify(config));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -74,7 +68,7 @@ export default function Settings() {
                 onChange={(e) => setConfig({ ...config, apiBaseUrl: e.target.value })}
               />
               <div className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>
-                Leave empty to use mock data mode. Set in .env file for persistence.
+                Leave empty to use mock data mode. Set in .env file or save here for persistence.
               </div>
             </div>
             <div>
@@ -87,7 +81,7 @@ export default function Settings() {
                 onChange={(e) => setConfig({ ...config, wsUrl: e.target.value })}
               />
               <div className="text-muted" style={{ fontSize: 11, marginTop: 4 }}>
-                For real-time updates. Leave empty if backend doesn't support WebSocket.
+                For real-time updates. Leave empty if backend does not support WebSocket.
               </div>
             </div>
           </div>
@@ -151,11 +145,14 @@ export default function Settings() {
                         className="input"
                         type="number"
                         style={{ width: 80 }}
-                        value={range.minTemp}
-                        onChange={(e) => setProductRanges({
-                          ...productRanges,
-                          [product]: { ...range, minTemp: parseFloat(e.target.value) },
-                        })}
+                        value={isNaN(range.minTemp) ? '' : range.minTemp}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                          setProductRanges({
+                            ...productRanges,
+                            [product]: { ...range, minTemp: val },
+                          });
+                        }}
                       />
                     </td>
                     <td>
@@ -163,11 +160,14 @@ export default function Settings() {
                         className="input"
                         type="number"
                         style={{ width: 80 }}
-                        value={range.maxTemp}
-                        onChange={(e) => setProductRanges({
-                          ...productRanges,
-                          [product]: { ...range, maxTemp: parseFloat(e.target.value) },
-                        })}
+                        value={isNaN(range.maxTemp) ? '' : range.maxTemp}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                          setProductRanges({
+                            ...productRanges,
+                            [product]: { ...range, maxTemp: val },
+                          });
+                        }}
                       />
                     </td>
                     <td>
@@ -175,11 +175,14 @@ export default function Settings() {
                         className="input"
                         type="number"
                         style={{ width: 80 }}
-                        value={range.minHumidity}
-                        onChange={(e) => setProductRanges({
-                          ...productRanges,
-                          [product]: { ...range, minHumidity: parseInt(e.target.value) },
-                        })}
+                        value={isNaN(range.minHumidity) ? '' : range.minHumidity}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                          setProductRanges({
+                            ...productRanges,
+                            [product]: { ...range, minHumidity: val },
+                          });
+                        }}
                       />
                     </td>
                     <td>
@@ -187,11 +190,14 @@ export default function Settings() {
                         className="input"
                         type="number"
                         style={{ width: 80 }}
-                        value={range.maxHumidity}
-                        onChange={(e) => setProductRanges({
-                          ...productRanges,
-                          [product]: { ...range, maxHumidity: parseInt(e.target.value) },
-                        })}
+                        value={isNaN(range.maxHumidity) ? '' : range.maxHumidity}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                          setProductRanges({
+                            ...productRanges,
+                            [product]: { ...range, maxHumidity: val },
+                          });
+                        }}
                       />
                     </td>
                   </tr>
@@ -250,3 +256,4 @@ export default function Settings() {
     </div>
   );
 }
+

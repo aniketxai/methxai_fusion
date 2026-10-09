@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { AlertCircle, Inbox, Loader2, WifiOff } from 'lucide-react';
 
 export function LoadingState({ message = 'Loading data...' }) {
@@ -9,6 +10,10 @@ export function LoadingState({ message = 'Loading data...' }) {
   );
 }
 
+LoadingState.propTypes = {
+  message: PropTypes.string,
+};
+
 export function EmptyState({ title = 'No data available', message }) {
   return (
     <div className="state-box">
@@ -18,6 +23,11 @@ export function EmptyState({ title = 'No data available', message }) {
     </div>
   );
 }
+
+EmptyState.propTypes = {
+  title: PropTypes.string,
+  message: PropTypes.string,
+};
 
 export function ErrorState({ title = 'Failed to load', message }) {
   return (
@@ -29,6 +39,11 @@ export function ErrorState({ title = 'Failed to load', message }) {
   );
 }
 
+ErrorState.propTypes = {
+  title: PropTypes.string,
+  message: PropTypes.string,
+};
+
 export function DisconnectedState({ title = 'Backend not connected', message }) {
   return (
     <div className="state-box">
@@ -38,3 +53,9 @@ export function DisconnectedState({ title = 'Backend not connected', message }) 
     </div>
   );
 }
+
+DisconnectedState.propTypes = {
+  title: PropTypes.string,
+  message: PropTypes.string,
+};
+

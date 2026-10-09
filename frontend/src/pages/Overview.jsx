@@ -1,9 +1,9 @@
 // Overview dashboard — active shipments, excursions, alerts, temperature trend
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Truck, AlertTriangle, PackageSearch, MapPin, Activity, CheckCircle,
+  Truck, AlertTriangle, PackageSearch, MapPin, Activity, CheckCircle, ArrowRight,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, ReferenceLine,
@@ -19,8 +19,16 @@ export default function Overview() {
   const { data: shipments, loading: sLoading, error: sError } = useShipments();
   const { data: summary, loading: sumLoading } = useDashboardSummary();
   const { data: alerts, loading: aLoading } = useAlerts();
-  const [selectedShipmentId, setSelectedShipmentId] = useState('SHP-2410-004');
+  const [selectedShipmentId, setSelectedShipmentId] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (shipments && shipments.length > 0) {
+      if (!selectedShipmentId || !shipments.some((s) => s.id === selectedShipmentId)) {
+        setSelectedShipmentId(shipments[0].id);
+      }
+    }
+  }, [shipments, selectedShipmentId]);
 
   const selectedShipment = useMemo(
     () => shipments?.find((s) => s.id === selectedShipmentId) || shipments?.[0],
@@ -105,7 +113,12 @@ export default function Overview() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
                   <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={50} />
                   <YAxis tick={{ fontSize: 10 }} domain={['dataMin - 2', 'dataMax + 2']} />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      name === 'temperature' ? `${value}°C` : `${value}%`,
+                      name === 'temperature' ? 'Temp' : 'Humidity',
+                    ]}
+                  />
                   {selectedShipment && (
                     <>
                       <ReferenceArea
@@ -128,14 +141,21 @@ export default function Overview() {
         <div className="panel">
           <div className="panel-header">
             <h2>Recent Alerts & Events</h2>
-            <span className="meta">{recentAlerts.length} recent</span>
+            <button className="btn btn-sm" onClick={() => navigate('/alerts')}>
+              View all <ArrowRight size={12} />
+            </button>
           </div>
           <div className="panel-body" style={{ padding: 0 }}>
             {aLoading ? (
               <LoadingState message="Loading alerts..." />
             ) : (
               recentAlerts.map((alert) => (
-                <div key={alert.id} className="alert-item">
+                <div
+                  key={alert.id}
+                  className="alert-item"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(alert.shipmentId ? `/shipments/${alert.shipmentId}` : '/alerts')}
+                >
                   <div className="alert-icon">
                     {alert.severity === 'critical' ? (
                       <AlertTriangle size={14} style={{ color: 'var(--red)' }} />
@@ -201,3 +221,4 @@ export default function Overview() {
     </div>
   );
 }
+

@@ -1,13 +1,12 @@
 // Checkpoints & Alerts — alert management with acknowledge/review actions
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   AlertTriangle, Thermometer, Cpu, WifiOff, Clock, MapPin, CheckCircle, Eye,
 } from 'lucide-react';
 import { useAlerts, useCheckpoints } from '../hooks/useApi.js';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateViews.jsx';
 import { api } from '../services/api.js';
-import { ALERTS } from '../data/mockData.js';
 import { timeAgo, formatDateTime, getAlertTypeLabel, getSeverityClass } from '../utils/format.js';
 
 const TYPE_ICONS = {
@@ -29,9 +28,10 @@ export default function CheckpointsAlerts() {
   const [activeTab, setActiveTab] = useState('alerts');
 
   // Sync mock data into local state so acknowledge actions update the UI
-  useMemo(() => {
+  useEffect(() => {
     if (initialAlerts) setAlerts(initialAlerts);
   }, [initialAlerts]);
+
 
   const handleAck = useCallback(async (id) => {
     await api.acknowledgeAlert(id);
