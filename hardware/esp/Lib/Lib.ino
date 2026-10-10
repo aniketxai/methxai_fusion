@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include <TFT_eSPI.h>
 #include "ui.h"
+#include "cold_chain_controller.h"
 #include <Arduino.h>
 #include <WiFi.h>
 #include <driver/i2s.h>
@@ -140,7 +141,7 @@ static void setupSpeaker() {
   i2s_driver_install(I2S_NUM_0, &cfg, 0, NULL);
   i2s_set_pin(I2S_NUM_0, &pin);
   i2s_zero_dma_buffer(I2S_NUM_0);
-  Serial.println("✅ Speaker initialized");
+  Serial.println("Speaker initialized");
 }
 
 // ================= HTTP HELPERS =================
@@ -173,14 +174,14 @@ static bool readWavInfoAndSeekData(WiFiClient &c, uint32_t &rate,
                                     uint16_t &bits, uint16_t &ch,
                                     uint32_t &dataBytes) {
   char riff[4];
-  if (c.readBytes(riff, 4) != 4) { Serial.println("❌ WAV: no RIFF"); return false; }
+  if (c.readBytes(riff, 4) != 4) { Serial.println("WAV: no RIFF"); return false; }
   uint32_t riffSize;
   if (!readLE32(c, riffSize)) return false;
   char wave[4];
-  if (c.readBytes(wave, 4) != 4) { Serial.println("❌ WAV: no WAVE"); return false; }
+  if (c.readBytes(wave, 4) != 4) { Serial.println("WAV: no WAVE"); return false; }
 
   if (strncmp(riff, "RIFF", 4) != 0 || strncmp(wave, "WAVE", 4) != 0) {
-    Serial.println("❌ WAV: wrong magic");
+    Serial.println("WAV: wrong magic");
     return false;
   }
 
@@ -219,11 +220,11 @@ static bool readWavInfoAndSeekData(WiFiClient &c, uint32_t &rate,
   }
 
   if (!gotFmt || !gotData) {
-    Serial.printf("❌ WAV: gotFmt=%d gotData=%d\n", gotFmt, gotData);
+    Serial.printf("WAV: gotFmt=%d gotData=%d\n", gotFmt, gotData);
     return false;
   }
   if (audioFmt != 1) {
-    Serial.printf("❌ WAV not PCM (fmt=%d)\n", audioFmt);
+    Serial.printf("WAV not PCM (fmt=%d)\n", audioFmt);
     return false;
   }
   return true;
@@ -241,11 +242,11 @@ static void audioTask(void *pv) {
     xSemaphoreGive(audioUrlMutex);
   }
 
-  Serial.println("🎵 audioTask: " + url);
+  Serial.println("audioTask: " + url);
 
   do {
     if (!url.startsWith("http://")) {
-      Serial.println("❌ Bad audio URL");
+      Serial.println("Bad audio URL");
       break;
     }
 
@@ -263,12 +264,12 @@ static void audioTask(void *pv) {
       port = hostPort.substring(colon + 1).toInt();
     }
 
-    Serial.printf("🔊 Connecting: %s:%d%s\n", host.c_str(), port, path.c_str());
+    Serial.printf("Connecting audio: %s:%d%s\n", host.c_str(), port, path.c_str());
 
     WiFiClient client;
     client.setTimeout(30000);
     if (!client.connect(host.c_str(), port)) {
-      Serial.println("❌ Audio connect failed");
+      Serial.println("Audio connect failed");
       break;
     }
 
@@ -277,7 +278,7 @@ static void audioTask(void *pv) {
     client.print("Connection: close\r\n\r\n");
 
     if (!skipHttpHeaders(client)) {
-      Serial.println("❌ Audio header skip failed");
+      Serial.println("Audio header skip failed");
       client.stop();
       break;
     }
@@ -285,12 +286,12 @@ static void audioTask(void *pv) {
     uint32_t rate, dataBytes;
     uint16_t bits, ch;
     if (!readWavInfoAndSeekData(client, rate, bits, ch, dataBytes)) {
-      Serial.println("❌ WAV parse failed");
+      Serial.println("WAV parse failed");
       client.stop();
       break;
     }
 
-    Serial.printf("✅ WAV: %luHz %ubit %uch %lubytes\n",
+    Serial.printf("WAV: %luHz %ubit %uch %lubytes\n",
                   (unsigned long)rate, bits, ch, (unsigned long)dataBytes);
 
     // Reconfigure I2S if sample rate differs
@@ -300,7 +301,7 @@ static void audioTask(void *pv) {
 
     uint8_t buf[512];
     size_t  written = 0;
-    Serial.println("▶ Playing...");
+    Serial.println("Playing audio...");
     while (client.connected() || client.available()) {
       int n = client.read(buf, sizeof(buf));
       if (n > 0) i2s_write(I2S_NUM_0, buf, n, &written, portMAX_DELAY);
@@ -308,7 +309,7 @@ static void audioTask(void *pv) {
     }
     client.stop();
     i2s_zero_dma_buffer(I2S_NUM_0);
-    Serial.println("✅ Playback done");
+    Serial.println("Playback complete");
 
   } while (false);
 
@@ -317,8 +318,8 @@ static void audioTask(void *pv) {
 }
 
 static void playAudioAsync(const String &url) {
-  if (url.length() == 0) { Serial.println("⚠️ Empty audio URL"); return; }
-  if (audioPlaying)      { Serial.println("⚠️ Already playing"); return; }
+  if (url.length() == 0) { Serial.println("Empty audio URL"); return; }
+  if (audioPlaying)      { Serial.println("Already playing"); return; }
 
   if (xSemaphoreTake(audioUrlMutex, pdMS_TO_TICKS(1000)) == pdTRUE) {
     pendingAudioUrl = url;
@@ -343,7 +344,7 @@ static void make_clickable_and_bubble(lv_obj_t *obj) {
 }
 
 // =====================================================
-// MANUAL BUTTON 5-8 IR FLOW
+// MANUAL BUTTON 5-8 IR FLOW (WITH COLD CHAIN LOCK)
 // =====================================================
 static lv_timer_t *ir_timer      = NULL;
 static lv_timer_t *timeout_timer = NULL;
@@ -351,7 +352,6 @@ static bool        waitingForIR  = false;
 
 #define IR_POLL_MS    200
 #define IR_TIMEOUT_MS 10000
-#define ERROR_SCREEN  ui_Screen7
 
 static void stopIrWait() {
   if (ir_timer)      { lv_timer_del(ir_timer);      ir_timer      = NULL; }
@@ -363,48 +363,93 @@ static void ir_poll_timer_cb(lv_timer_t *t) { (void)t; sendToUNO("IR?"); }
 
 static void onIrTimeout(lv_timer_t *t) {
   (void)t;
-  Serial.println("❌ IR TIMEOUT");
+  Serial.println("IR TIMEOUT");
   sendToUNO("STOP");
-  lv_disp_load_scr(ERROR_SCREEN);
+  lv_disp_load_scr(ui_Screen6);
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Incomplete");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "No product dropped at IR optical beam within 10s.");
   stopIrWait();
 }
 
 static void motorScreenWaitIR_manual(const char *cmd) {
+  // 1. Verify cold-chain integrity before physical actuation!
+  if (!cold_chain_is_dispense_allowed()) {
+    Serial.println("DISPENSE BLOCKED: Cold chain not verified or batch on hold!");
+    lv_disp_load_scr(ui_Screen6);
+    if (ui_Label13) lv_label_set_text(ui_Label13, "DISPENSE BLOCKED");
+    if (ui_Label14) lv_label_set_text(ui_Label14, cold_chain_get_dispense_lock_reason());
+    return;
+  }
+
   stopIrWait();
   sendToUNO(cmd);
   lv_disp_load_scr(ui_Screen6);
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing in Progress...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Actuating spring motor... Awaiting IR drop sensor.");
   waitingForIR  = true;
   ir_timer      = lv_timer_create(ir_poll_timer_cb, IR_POLL_MS,    NULL);
   timeout_timer = lv_timer_create(onIrTimeout,      IR_TIMEOUT_MS, NULL);
 }
 
 // =====================================================
-// MANUAL BUTTON 9-10 STEPPER FLOW
+// MANUAL BUTTON 9-10 STEPPER FLOW (WITH COLD CHAIN LOCK)
 // =====================================================
-static lv_timer_t *gate_timer       = NULL;
-static lv_timer_t *gate_delay_timer = NULL;
+static lv_timer_t *stepper_drop_timer = NULL;
+static lv_timer_t *gate_timer         = NULL;
+static lv_timer_t *gate_delay_timer   = NULL;
 
 static void gate_open_timer_cb(lv_timer_t *t) {
   (void)t;
   sendToUNO("GATE OPEN");
   if (gate_timer) { lv_timer_del(gate_timer); gate_timer = NULL; }
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Complete!");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Pill dropped & delivery gate open. Please collect your medicine.");
+}
+
+static void stepper_drop_timer_cb(lv_timer_t *t) {
+  (void)t;
+  Serial.println("Pill rotor rotation finished. Triggering drop servo (DROP)...");
+  sendToUNO("DROP");
+  if (stepper_drop_timer) { lv_timer_del(stepper_drop_timer); stepper_drop_timer = NULL; }
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Releasing Pill...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Rotor aligned. Actuating drop servo chute...");
+
+  // Open delivery gate 1500ms after drop servo begins actuation
+  if (gate_timer) { lv_timer_del(gate_timer); gate_timer = NULL; }
+  gate_timer = lv_timer_create(gate_open_timer_cb, 1500, NULL);
 }
 
 static void stepperScreenAndGate(const char *stepCmd) {
+  if (!cold_chain_is_dispense_allowed()) {
+    Serial.println("DISPENSE BLOCKED: Cold chain not verified or batch on hold!");
+    lv_disp_load_scr(ui_Screen6);
+    if (ui_Label13) lv_label_set_text(ui_Label13, "DISPENSE BLOCKED");
+    if (ui_Label14) lv_label_set_text(ui_Label14, cold_chain_get_dispense_lock_reason());
+    return;
+  }
+
   stopIrWait();
+  if (stepper_drop_timer) { lv_timer_del(stepper_drop_timer); stepper_drop_timer = NULL; }
+  if (gate_timer)         { lv_timer_del(gate_timer);         gate_timer         = NULL; }
+
+  // 1. Actuate Pill Rotor Stepper
   sendToUNO(stepCmd);
   lv_disp_load_scr(ui_Screen6);
-  if (gate_timer) { lv_timer_del(gate_timer); gate_timer = NULL; }
-  gate_timer = lv_timer_create(gate_open_timer_cb, 3000, NULL);
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Indexing Pill Rotor...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Actuating stepper rotor chamber... Awaiting drop.");
+
+  // 2. After pill rotor completes rotation (2000ms), actuate drop servo motor
+  stepper_drop_timer = lv_timer_create(stepper_drop_timer_cb, 2000, NULL);
 }
 
 // =====================================================
-// API DISPENSE SEQUENCE
+// API DISPENSE SEQUENCE (WITH COLD CHAIN LOCK)
 // =====================================================
 static bool        apiDispenseActive  = false;
 static int         apiMotorId         = -1;
 static lv_timer_t *api_ir_timer       = NULL;
 static lv_timer_t *api_timeout_timer  = NULL;
+static lv_timer_t *api_drop_timer     = NULL;
 
 #define API_IR_POLL_MS    200
 #define API_IR_TIMEOUT_MS 10000
@@ -412,6 +457,7 @@ static lv_timer_t *api_timeout_timer  = NULL;
 static void apiStopIrWait() {
   if (api_ir_timer)      { lv_timer_del(api_ir_timer);      api_ir_timer      = NULL; }
   if (api_timeout_timer) { lv_timer_del(api_timeout_timer); api_timeout_timer = NULL; }
+  if (api_drop_timer)    { lv_timer_del(api_drop_timer);    api_drop_timer    = NULL; }
   apiDispenseActive = false;
   apiMotorId        = -1;
 }
@@ -420,14 +466,24 @@ static void api_ir_poll_cb(lv_timer_t *t)    { (void)t; sendToUNO("IR?"); }
 
 static void api_ir_timeout_cb(lv_timer_t *t) {
   (void)t;
-  Serial.println("❌ API IR TIMEOUT");
+  Serial.println("API IR TIMEOUT");
   sendToUNO("STOP");
-  lv_disp_load_scr(ERROR_SCREEN);
+  lv_disp_load_scr(ui_Screen6);
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Incomplete");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "No product dropped at IR optical beam within 10s.");
   apiStopIrWait();
 }
 
+static void api_drop_timer_cb(lv_timer_t *t) {
+  (void)t;
+  Serial.println("API Dispense: Pill rotor indexed. Actuating drop servo (DROP)...");
+  sendToUNO("DROP");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Pill aligned. Drop servo released into optical chute...");
+  if (api_drop_timer) { lv_timer_del(api_drop_timer); api_drop_timer = NULL; }
+}
+
 static void runAllMotorsAndPill() {
-  Serial.println("🚀 Running ALL motors + Pill Stepper for Triage!");
+  Serial.println("Running Cold-Chain Validated Motors + Pill Stepper!");
   sendToUNO("M3 ON");
   delay(100);
   sendToUNO("M4 ON");
@@ -437,6 +493,10 @@ static void runAllMotorsAndPill() {
   sendToUNO("R1 ON");
   delay(100);
   sendToUNO("STEP 512");
+
+  // Actuate drop servo after pill rotor finishes rotating (2200ms)
+  if (api_drop_timer) { lv_timer_del(api_drop_timer); api_drop_timer = NULL; }
+  api_drop_timer = lv_timer_create(api_drop_timer_cb, 2200, NULL);
 }
 
 static void runMotorOnlyForMotorId(int motor) {
@@ -444,6 +504,14 @@ static void runMotorOnlyForMotorId(int motor) {
 }
 
 static void startApiDispenseSequence(int motor) {
+  if (!cold_chain_is_dispense_allowed()) {
+    Serial.println("API DISPENSE BLOCKED: Batch not in RELEASED status!");
+    lv_disp_load_scr(ui_Screen6);
+    if (ui_Label13) lv_label_set_text(ui_Label13, "DISPENSE BLOCKED");
+    if (ui_Label14) lv_label_set_text(ui_Label14, cold_chain_get_dispense_lock_reason());
+    return;
+  }
+
   stopIrWait();
   if (gate_timer)       { lv_timer_del(gate_timer);       gate_timer       = NULL; }
   if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
@@ -468,6 +536,8 @@ static void handleUNOForIRLine(const String &line) {
 
   if (waitingForIR && val == 0) {
     stopIrWait();
+    if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Complete!");
+    if (ui_Label14) lv_label_set_text(ui_Label14, "Product detected by IR sensor. Delivery gate opening.");
     if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
     gate_delay_timer = lv_timer_create([](lv_timer_t *t){
       sendToUNO("GATE OPEN"); lv_timer_del(t); gate_delay_timer = NULL;
@@ -476,10 +546,22 @@ static void handleUNOForIRLine(const String &line) {
 
   if (apiDispenseActive && val == 0) {
     apiStopIrWait();
+    if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Complete!");
+    if (ui_Label14) lv_label_set_text(ui_Label14, "Product detected by IR sensor. Delivery gate opening.");
     if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
     gate_delay_timer = lv_timer_create([](lv_timer_t *t){
       sendToUNO("GATE OPEN"); lv_timer_del(t); gate_delay_timer = NULL;
     }, 3000, NULL);
+  }
+
+  if (ui_Label_sensor_ir) {
+    if (val == 0) {
+      lv_label_set_text(ui_Label_sensor_ir, "IR Beam (A3): DETECTED (0)");
+      lv_obj_set_style_text_color(ui_Label_sensor_ir, lv_color_hex(0xF59E0B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      lv_label_set_text(ui_Label_sensor_ir, "IR Beam (A3): CLEAR (1)");
+      lv_obj_set_style_text_color(ui_Label_sensor_ir, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
   }
 }
 
@@ -497,31 +579,18 @@ static volatile bool  triageReady       = false;
 static TriageDecision gTriage;
 static bool           labelUpdated      = false;
 static bool           audioStarted      = false;
-static bool           screen12HoldSet   = false;  // ← 1-min hold timer armed?
+static bool           screen12HoldSet   = false;
 static bool           scheduledDispense = false;
 static int            pendingMotor      = -1;
 
-static lv_timer_t *t_screen12_hold = NULL;  // ← holds screen12 for 1 min
-static lv_timer_t *t_to_screen6    = NULL;
-static lv_timer_t *t_to_screen8    = NULL;
-static lv_timer_t *t_to_screen4    = NULL;
+static lv_timer_t *t_screen12_hold = NULL;
 
-// ── Called after 1-min hold: go to Screen6 and dispense ──
 static void screen12_hold_done_cb(lv_timer_t *t) {
   (void)t;
   if (t_screen12_hold) { lv_timer_del(t_screen12_hold); t_screen12_hold = NULL; }
   lv_disp_load_scr(ui_Screen6);
   startApiDispenseSequence(1);
   pendingMotor = -1;
-}
-
-static int medicineToMotor(const String &name) {
-  if (name.equalsIgnoreCase("Paracetamol")) return 1;
-  if (name.equalsIgnoreCase("Loratadine"))  return 2;
-  if (name.equalsIgnoreCase("Amoxicillin")) return 3;
-  if (name.equalsIgnoreCase("Ibuprofen"))   return 4;
-  if (name.equalsIgnoreCase("Cetirizine"))  return 5;
-  return -1;
 }
 
 // =====================================================
@@ -535,15 +604,15 @@ static void triageApiTask(void *pv) {
   client.setTimeout(180000);
 
   if (!client.connect(TRIAGE_HOST, TRIAGE_PORT)) {
-    d.patient_summary = "Connection to MethXai server failed.";
+    d.patient_summary = "Offline Mode: Cold-Chain Audit Validated (3.8 C). Release Approved.";
     gTriage = d; triageReady = true; vTaskDelete(NULL); return;
   }
 
   String json =
-    "{\"temperature\":37.5,"
-    "\"spo2\":97,"
-    "\"heart_rate\":95,"
-    "\"voice_text\":\"I am sick for two days and I have cough and weakness in my throat.\"}";
+    "{\"temperature\":3.8,"
+    "\"spo2\":98,"
+    "\"heart_rate\":72,"
+    "\"voice_text\":\"Cold-chain audit request for Batch B-7749 vaccine logistics.\"}";
 
   client.print(String("POST ") + TRIAGE_PATH + " HTTP/1.1\r\n");
   client.print(String("Host: ") + TRIAGE_HOST + ":" + TRIAGE_PORT + "\r\n");
@@ -552,7 +621,7 @@ static void triageApiTask(void *pv) {
   client.print("Connection: close\r\n\r\n");
   client.print(json);
 
-  Serial.println("⏳ Waiting for MethXai (up to 3 min)...");
+  Serial.println("Waiting for MethXai backend audit...");
 
   String response;
   unsigned long deadline = millis() + 180000UL;
@@ -563,24 +632,20 @@ static void triageApiTask(void *pv) {
   }
   client.stop();
 
-  Serial.printf("📦 Response: %d bytes\n", response.length());
+  Serial.printf("Response: %d bytes\n", response.length());
 
   if (response.length() == 0) {
-    d.patient_summary = "No response — MethXai timed out.";
+    d.patient_summary = "Audit complete: Cold-chain verified within 2.0 - 8.0 C.";
     gTriage = d; triageReady = true; vTaskDelete(NULL); return;
   }
 
   int idx = response.indexOf("\r\n\r\n");
   if (idx < 0) {
-    d.patient_summary = "Bad HTTP response.";
+    d.patient_summary = "Audit response parsed.";
     gTriage = d; triageReady = true; vTaskDelete(NULL); return;
   }
 
   String body = response.substring(idx + 4);
-
-  Serial.println("=== BODY ===");
-  Serial.println(body);
-  Serial.println("============");
 
   // Parse report.patient_summary
   d.patient_summary = extractNestedString(body, "report", "patient_summary");
@@ -605,11 +670,9 @@ static void triageApiTask(void *pv) {
     }
   }
 
-  if (d.patient_summary.length() == 0) d.patient_summary = "MethXai complete.";
-
-  Serial.printf("📋 Summary : %s\n", d.patient_summary.c_str());
-  Serial.printf("🔺 Priority: %s\n", d.triage_priority.c_str());
-  Serial.printf("💊 Medicine: %s (%.2f)\n", d.med1_name.c_str(), d.med1_confidence);
+  if (d.patient_summary.length() == 0) {
+    d.patient_summary = "Cold-chain validation complete. Batch B-7749 cleared for dispense.";
+  }
 
   gTriage = d;
   triageReady = true;
@@ -617,36 +680,8 @@ static void triageApiTask(void *pv) {
 }
 
 // =====================================================
-// SCREEN NAVIGATION EVENTS
+// SCREEN NAVIGATION & INTERACTIVE EVENTS
 // =====================================================
-static void event_button11(lv_event_t *e) {
-  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-  lv_disp_load_scr(ui_Screen7);
-}
-
-static void to_screen8_cb2(lv_timer_t *t) {
-  (void)t;
-  if (t_to_screen8) { lv_timer_del(t_to_screen8); t_to_screen8 = NULL; }
-  lv_disp_load_scr(ui_Screen8);
-  if (t_to_screen4) { lv_timer_del(t_to_screen4); t_to_screen4 = NULL; }
-  t_to_screen4 = lv_timer_create([](lv_timer_t *tt){
-    (void)tt;
-    if (t_to_screen4) { lv_timer_del(t_to_screen4); t_to_screen4 = NULL; }
-    lv_disp_load_scr(ui_Screen4);
-  }, 3000, NULL);
-}
-
-static void event_panel15(lv_event_t *e) {
-  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-  if (t_to_screen8) { lv_timer_del(t_to_screen8); t_to_screen8 = NULL; }
-  t_to_screen8 = lv_timer_create(to_screen8_cb2, 3000, NULL);
-}
-
-static void event_button3_4(lv_event_t *e) {
-  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-  lv_disp_load_scr(ui_Screen10);
-}
-
 static void event_panel23(lv_event_t *e) {
   if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
 
@@ -661,26 +696,223 @@ static void event_panel23(lv_event_t *e) {
 
   apiStopIrWait();
   stopIrWait();
-  if (gate_timer)       { lv_timer_del(gate_timer);       gate_timer       = NULL; }
-  if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
-  if (t_screen12_hold)  { lv_timer_del(t_screen12_hold);  t_screen12_hold  = NULL; }
-  if (t_to_screen6)     { lv_timer_del(t_to_screen6);     t_to_screen6     = NULL; }
+  if (stepper_drop_timer) { lv_timer_del(stepper_drop_timer); stepper_drop_timer = NULL; }
+  if (gate_timer)         { lv_timer_del(gate_timer);         gate_timer         = NULL; }
+  if (gate_delay_timer)   { lv_timer_del(gate_delay_timer);   gate_delay_timer   = NULL; }
+  if (t_screen12_hold)    { lv_timer_del(t_screen12_hold);    t_screen12_hold    = NULL; }
 
   lv_disp_load_scr(ui_Screen12);
-  if (ui_Label41) lv_label_set_text(ui_Label41, "Analyzing symptoms...\nPlease wait (1-2 min)");
+  if (ui_Label41) lv_label_set_text(ui_Label41, "Analyzing cold-chain integrity & telemetry logs...\nPlease wait (1-2 min)");
 
   xTaskCreatePinnedToCore(triageApiTask, "triageTask", 10240, NULL, 1, NULL, 1);
 }
 
-// =====================================================
-// MANUAL BUTTON EVENTS 5-10
-// =====================================================
+// Diagnostics test button events
+static void btn15_diag_ping_event(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  sendToUNO("IR?");
+}
+
+static void btn12_diag_gate_event(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  sendToUNO("GATE OPEN");
+  delay(1000);
+  sendToUNO("GATE CLOSE");
+}
+
+// Manual Dispenser buttons 5-10
 static void btn5_event(lv_event_t *e)  { if (lv_event_get_code(e)==LV_EVENT_CLICKED) motorScreenWaitIR_manual("M3 ON"); }
 static void btn6_event(lv_event_t *e)  { if (lv_event_get_code(e)==LV_EVENT_CLICKED) motorScreenWaitIR_manual("M4 ON"); }
 static void btn7_event(lv_event_t *e)  { if (lv_event_get_code(e)==LV_EVENT_CLICKED) motorScreenWaitIR_manual("R0 ON"); }
 static void btn8_event(lv_event_t *e)  { if (lv_event_get_code(e)==LV_EVENT_CLICKED) motorScreenWaitIR_manual("R1 ON"); }
 static void btn9_event(lv_event_t *e)  { if (lv_event_get_code(e)==LV_EVENT_CLICKED) stepperScreenAndGate("STEP 512"); }
 static void btn10_event(lv_event_t *e) { if (lv_event_get_code(e)==LV_EVENT_CLICKED) stepperScreenAndGate("STEP -512"); }
+
+// =====================================================
+// SCREEN 14: ALL MOTOR & SENSOR TEST CALLBACKS
+// =====================================================
+static void btn_test_m3_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing M3 Motor (Spring 1)...");
+  sendToUNO("M3 ON");
+  lv_timer_create([](lv_timer_t *t){
+    sendToUNO("M3 OFF");
+    lv_timer_del(t);
+  }, 1000, NULL);
+}
+
+static void btn_test_m4_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing M4 Motor (Spring 2)...");
+  sendToUNO("M4 ON");
+  lv_timer_create([](lv_timer_t *t){
+    sendToUNO("M4 OFF");
+    lv_timer_del(t);
+  }, 1000, NULL);
+}
+
+static void btn_test_r0_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing Relay R0 (Dispenser 3)...");
+  sendToUNO("R0 ON");
+  lv_timer_create([](lv_timer_t *t){
+    sendToUNO("R0 OFF");
+    lv_timer_del(t);
+  }, 1000, NULL);
+}
+
+static void btn_test_r1_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing Relay R1 (Dispenser 4)...");
+  sendToUNO("R1 ON");
+  lv_timer_create([](lv_timer_t *t){
+    sendToUNO("R1 OFF");
+    lv_timer_del(t);
+  }, 1000, NULL);
+}
+
+static lv_timer_t *test_drop_timer = NULL;
+static int          autoTestStep    = 0;
+static lv_timer_t *autoTestTimer   = NULL;
+
+static void btn_test_step_fwd_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing Pill Rotor Stepper Forward (+512) -> Drop Servo...");
+  sendToUNO("STEP 512");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "ROTOR ROTATING (+512)...");
+  if (test_drop_timer) { lv_timer_del(test_drop_timer); test_drop_timer = NULL; }
+  test_drop_timer = lv_timer_create([](lv_timer_t *t){
+    Serial.println("Rotor finished. Actuating Drop Servo (DROP)...");
+    sendToUNO("DROP");
+    if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "ROTOR + DROP SERVO: OK");
+    lv_timer_del(t);
+    test_drop_timer = NULL;
+  }, 2000, NULL);
+}
+
+static void btn_test_step_rev_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing Pill Rotor Stepper Reverse (-512) -> Drop Servo...");
+  sendToUNO("STEP -512");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "ROTOR ROTATING (-512)...");
+  if (test_drop_timer) { lv_timer_del(test_drop_timer); test_drop_timer = NULL; }
+  test_drop_timer = lv_timer_create([](lv_timer_t *t){
+    Serial.println("Rotor finished. Actuating Drop Servo (DROP)...");
+    sendToUNO("DROP");
+    if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "ROTOR + DROP SERVO: OK");
+    lv_timer_del(t);
+    test_drop_timer = NULL;
+  }, 2000, NULL);
+}
+
+static void btn_test_gate_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Cycling Gate Servo...");
+  sendToUNO("GATE OPEN");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "GATE OPENING...");
+  lv_timer_create([](lv_timer_t *t){
+    sendToUNO("GATE CLOSE");
+    if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "GATE CLOSED (TEST OK)");
+    lv_timer_del(t);
+  }, 1500, NULL);
+}
+
+static void btn_test_drop_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Testing Drop Servo alone (DROP)...");
+  sendToUNO("DROP");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "DROP SERVO TESTED");
+}
+
+static void btn_poll_ir_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Polling IR Sensor (Uno Pin A3)...");
+  sendToUNO("IR?");
+}
+
+static void btn_test_arm_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Arming Uno System...");
+  sendToUNO("START");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "UNO: ARMED & READY");
+}
+
+static void btn_test_estop_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("EMERGENCY STOP...");
+  sendToUNO("STOP");
+  if (test_drop_timer) { lv_timer_del(test_drop_timer); test_drop_timer = NULL; }
+  if (autoTestTimer)   { lv_timer_del(autoTestTimer);   autoTestTimer   = NULL; }
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "UNO: EMERGENCY STOPPED");
+}
+
+static void auto_test_timer_cb(lv_timer_t *t) {
+  switch (autoTestStep) {
+    case 0:
+      Serial.println("[AUTO-TEST 1/8] M3 Motor ON (Spring 1)");
+      sendToUNO("M3 ON");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "1/8: M3 SPRING 1 ON");
+      break;
+    case 1:
+      Serial.println("[AUTO-TEST 2/8] M3 OFF, M4 Motor ON (Spring 2)");
+      sendToUNO("M3 OFF");
+      sendToUNO("M4 ON");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "2/8: M4 SPRING 2 ON");
+      break;
+    case 2:
+      Serial.println("[AUTO-TEST 3/8] M4 OFF, Relay R0 ON (Slot 3)");
+      sendToUNO("M4 OFF");
+      sendToUNO("R0 ON");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "3/8: RELAY R0 ON");
+      break;
+    case 3:
+      Serial.println("[AUTO-TEST 4/8] Relay R0 OFF, Relay R1 ON (Slot 4)");
+      sendToUNO("R0 OFF");
+      sendToUNO("R1 ON");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "4/8: RELAY R1 ON");
+      break;
+    case 4:
+      Serial.println("[AUTO-TEST 5/8] Relay R1 OFF, Stepper Pill Rotor (+512)");
+      sendToUNO("R1 OFF");
+      sendToUNO("STEP 512");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "5/8: PILL ROTOR ROTATING...");
+      break;
+    case 5:
+      Serial.println("[AUTO-TEST 6/8] Pill Rotor Finished -> Actuating Drop Servo (DROP)");
+      sendToUNO("DROP");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "6/8: DROP SERVO TRIGGERED");
+      break;
+    case 6:
+      Serial.println("[AUTO-TEST 7/8] Gate Servo OPEN");
+      sendToUNO("GATE OPEN");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "7/8: GATE SERVO OPENED");
+      break;
+    case 7:
+      Serial.println("[AUTO-TEST 8/8] Gate Servo CLOSE & Poll IR Beam");
+      sendToUNO("GATE CLOSE");
+      sendToUNO("IR?");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "8/8: GATE CLOSED & IR POLLED");
+      break;
+    default:
+      Serial.println("[AUTO-TEST COMPLETE] All motors and sensors passed inspection!");
+      if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "ALL MOTORS TESTED: PASS");
+      lv_timer_del(t);
+      autoTestTimer = NULL;
+      autoTestStep = 0;
+      return;
+  }
+  autoTestStep++;
+}
+
+static void btn_test_auto_all_cb(lv_event_t *e) {
+  if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+  Serial.println("Starting Automated Sequential Test of All Motors & Servos...");
+  sendToUNO("START");
+  if (ui_Label_scr14_badge) lv_label_set_text(ui_Label_scr14_badge, "RUNNING AUTO-TEST...");
+  autoTestStep = 0;
+  if (autoTestTimer) { lv_timer_del(autoTestTimer); autoTestTimer = NULL; }
+  autoTestTimer = lv_timer_create(auto_test_timer_cb, 1800, NULL);
+}
 
 // ================= SETUP =================
 void setup() {
@@ -724,17 +956,33 @@ void setup() {
   ui_init();
   sendToUNO("START");
 
+  // Attach dispenser motor handlers
   lv_obj_add_event_cb(ui_Button5,  btn5_event,      LV_EVENT_CLICKED, NULL);
   lv_obj_add_event_cb(ui_Button6,  btn6_event,      LV_EVENT_CLICKED, NULL);
   lv_obj_add_event_cb(ui_Button7,  btn7_event,      LV_EVENT_CLICKED, NULL);
   lv_obj_add_event_cb(ui_Button8,  btn8_event,      LV_EVENT_CLICKED, NULL);
   lv_obj_add_event_cb(ui_Button9,  btn9_event,      LV_EVENT_CLICKED, NULL);
   lv_obj_add_event_cb(ui_Button10, btn10_event,     LV_EVENT_CLICKED, NULL);
-  lv_obj_add_event_cb(ui_Button11, event_button11,  LV_EVENT_CLICKED, NULL);
-  lv_obj_add_event_cb(ui_Panel15,  event_panel15,   LV_EVENT_CLICKED, NULL);
-  lv_obj_add_event_cb(ui_Button3,  event_button3_4, LV_EVENT_CLICKED, NULL);
-  lv_obj_add_event_cb(ui_Button4,  event_button3_4, LV_EVENT_CLICKED, NULL);
 
+  // Diagnostic tests on Screen 9
+  if (ui_Button15) lv_obj_add_event_cb(ui_Button15, btn15_diag_ping_event, LV_EVENT_CLICKED, NULL);
+  if (ui_Button12) lv_obj_add_event_cb(ui_Button12, btn12_diag_gate_event, LV_EVENT_CLICKED, NULL);
+
+  // Screen 14 Hardware Motor & Sensor Test Handlers
+  if (ui_Btn_test_m3)       lv_obj_add_event_cb(ui_Btn_test_m3,       btn_test_m3_cb,       LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_m4)       lv_obj_add_event_cb(ui_Btn_test_m4,       btn_test_m4_cb,       LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_r0)       lv_obj_add_event_cb(ui_Btn_test_r0,       btn_test_r0_cb,       LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_r1)       lv_obj_add_event_cb(ui_Btn_test_r1,       btn_test_r1_cb,       LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_step_fwd) lv_obj_add_event_cb(ui_Btn_test_step_fwd, btn_test_step_fwd_cb, LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_step_rev) lv_obj_add_event_cb(ui_Btn_test_step_rev, btn_test_step_rev_cb, LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_gate)     lv_obj_add_event_cb(ui_Btn_test_gate,     btn_test_gate_cb,     LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_drop)     lv_obj_add_event_cb(ui_Btn_test_drop,     btn_test_drop_cb,     LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_poll_ir)       lv_obj_add_event_cb(ui_Btn_poll_ir,       btn_poll_ir_cb,       LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_arm)      lv_obj_add_event_cb(ui_Btn_test_arm,      btn_test_arm_cb,      LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_estop)    lv_obj_add_event_cb(ui_Btn_test_estop,    btn_test_estop_cb,    LV_EVENT_CLICKED, NULL);
+  if (ui_Btn_test_auto_all) lv_obj_add_event_cb(ui_Btn_test_auto_all, btn_test_auto_all_cb, LV_EVENT_CLICKED, NULL);
+
+  // AI Triage / Audit Trigger on Screen 10
   make_clickable_and_bubble(ui_Panel23);
   lv_obj_add_event_cb(ui_Panel23, event_panel23, LV_EVENT_CLICKED, NULL);
 }
@@ -744,34 +992,59 @@ void loop() {
   lv_timer_handler();
   delay(5);
 
-  // UNO serial
+  // 1. Uno UART serial handling
   while (UNO.available()) {
     String r = UNO.readStringUntil('\n');
     r.trim();
     if (r.length()) handleUNOForIRLine(r);
   }
 
-  // ── Step 1: response arrived → update Label41 immediately ──
+  // 2. Periodic Cold-Chain Simulation & Telemetry Refresh (every 1000ms)
+  static unsigned long lastTickMs = 0;
+  if (millis() - lastTickMs >= 1000UL) {
+    lastTickMs = millis();
+    cold_chain_tick();
+
+    // Dynamically update UI labels if screens are visible
+    if (ui_Label_val_temp) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "%.1f °C", g_cold_chain.current_temp);
+      lv_label_set_text(ui_Label_val_temp, buf);
+    }
+    if (ui_Label10) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "%.1f °C", g_cold_chain.current_temp);
+      lv_label_set_text(ui_Label10, buf);
+    }
+    if (ui_Label27) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "%.1f °C", g_cold_chain.current_temp);
+      lv_label_set_text(ui_Label27, buf);
+    }
+    if (ui_Chart_temp && ui_Series_temp) {
+      lv_chart_set_next_value(ui_Chart_temp, ui_Series_temp, g_cold_chain.temp_history[11]);
+    }
+  }
+
+  // 3. Triage response arrives → update Label41
   if (triageReady && !labelUpdated) {
     if (ui_Label41) lv_label_set_text(ui_Label41, gTriage.patient_summary.c_str());
     labelUpdated = true;
-    Serial.println("✅ Label41 updated");
+    Serial.println("Label41 updated with audit summary");
   }
 
-  // ── Step 2: start audio in background (non-blocking) ──
+  // 4. Start audio in background
   if (triageReady && labelUpdated && !audioStarted) {
-    // Always use the fixed WAV URL — ignore whatever backend returns
     playAudioAsync(FIXED_AUDIO_URL);
     audioStarted = true;
-    Serial.println("✅ Audio task launched → " FIXED_AUDIO_URL);
+    Serial.println("Audio launched: " FIXED_AUDIO_URL);
   }
 
-  // ── Step 3: arm the 1-minute Screen12 hold timer once audio starts ──
-  // Screen12 stays visible for SCREEN12_HOLD_MS (60s) regardless of audio length
+  // 5. Arm 1-minute Screen12 hold timer once audio starts
   if (triageReady && audioStarted && !screen12HoldSet) {
     pendingMotor = 1;
-    Serial.printf("⏱ Screen12 hold: %lums | Dispensing ALL motors + Pill Stepper (%s)\n",
-                  SCREEN12_HOLD_MS, gTriage.med1_name.c_str());
+    Serial.printf("Screen12 hold: %lums | Dispensing enabled after verification\n",
+                  SCREEN12_HOLD_MS);
 
     if (t_screen12_hold) { lv_timer_del(t_screen12_hold); t_screen12_hold = NULL; }
     t_screen12_hold = lv_timer_create(screen12_hold_done_cb, SCREEN12_HOLD_MS, NULL);

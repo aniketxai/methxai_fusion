@@ -5,71 +5,139 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_Screen11 = NULL;lv_obj_t *ui_Panel26 = NULL;lv_obj_t *ui_Image11 = NULL;lv_obj_t *ui_Panel25 = NULL;lv_obj_t *ui_Label35 = NULL;
-// event funtions
+lv_obj_t *ui_Screen11 = NULL;
+lv_obj_t *ui_Panel26 = NULL;
+lv_obj_t *ui_Image11 = NULL;
+lv_obj_t *ui_Label_scr11_title = NULL;
 
-// build funtions
+lv_obj_t *ui_Panel25 = NULL;
+lv_obj_t *ui_Label35 = NULL;
+lv_obj_t *ui_Label_log1 = NULL;
+lv_obj_t *ui_Label_log2 = NULL;
+lv_obj_t *ui_Label_log3 = NULL;
+lv_obj_t *ui_Label_log4 = NULL;
+lv_obj_t *ui_Label_log5 = NULL;
+
+static void ui_event_Panel26_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen2_screen_init);
+    }
+}
 
 void ui_Screen11_screen_init(void)
 {
-ui_Screen11 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen11, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen11, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen11, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen11 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen11, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen11, lv_color_hex(0x0A1120), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen11, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel26 = lv_obj_create(ui_Screen11);
-lv_obj_set_width( ui_Panel26, 45);
-lv_obj_set_height( ui_Panel26, 33);
-lv_obj_set_x( ui_Panel26, -214 );
-lv_obj_set_y( ui_Panel26, -140 );
-lv_obj_set_align( ui_Panel26, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel26, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel26, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel26, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel26, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel26, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // ================= HEADER =================
+    lv_obj_t *head_bar = lv_obj_create(ui_Screen11);
+    lv_obj_set_width(head_bar, 472);
+    lv_obj_set_height(head_bar, 34);
+    lv_obj_set_x(head_bar, 0);
+    lv_obj_set_y(head_bar, -139);
+    lv_obj_set_align(head_bar, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(head_bar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(head_bar, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(head_bar, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(head_bar, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(head_bar, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(head_bar, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Image11 = lv_img_create(ui_Panel26);
-lv_img_set_src(ui_Image11, &ui_img_1046361127);
-lv_obj_set_width( ui_Image11, LV_SIZE_CONTENT);  /// 24
-lv_obj_set_height( ui_Image11, LV_SIZE_CONTENT);   /// 24
-lv_obj_set_x( ui_Image11, -9 );
-lv_obj_set_y( ui_Image11, -16 );
-lv_obj_add_flag( ui_Image11, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_Image11, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Panel26 = lv_obj_create(head_bar);
+    lv_obj_set_width(ui_Panel26, 42);
+    lv_obj_set_height(ui_Panel26, 28);
+    lv_obj_set_align(ui_Panel26, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Panel26, 2);
+    lv_obj_clear_flag(ui_Panel26, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel26, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel26, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel26, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel25 = lv_obj_create(ui_Screen11);
-lv_obj_set_width( ui_Panel25, 373);
-lv_obj_set_height( ui_Panel25, 56);
-lv_obj_set_x( ui_Panel25, 10 );
-lv_obj_set_y( ui_Panel25, -113 );
-lv_obj_set_align( ui_Panel25, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel25, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel25, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel25, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel25, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel25, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Image11 = lv_img_create(ui_Panel26);
+    lv_img_set_src(ui_Image11, &ui_img_1046361127);
+    lv_obj_set_align(ui_Image11, LV_ALIGN_CENTER);
 
-ui_Label35 = lv_label_create(ui_Panel25);
-lv_obj_set_width( ui_Label35, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label35, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label35, -2 );
-lv_obj_set_y( ui_Label35, -4 );
-lv_obj_set_align( ui_Label35, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label35,"Scan and Pay");
-lv_obj_set_style_text_font(ui_Label35, &lv_font_montserrat_34, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Label_scr11_title = lv_label_create(head_bar);
+    lv_obj_set_align(ui_Label_scr11_title, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Label_scr11_title, 52);
+    lv_label_set_text(ui_Label_scr11_title, "Cold-Chain Batch Audit Trail");
+    lv_obj_set_style_text_color(ui_Label_scr11_title, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_scr11_title, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    // ================= AUDIT LOG CARD =================
+    ui_Panel25 = lv_obj_create(ui_Screen11);
+    lv_obj_set_width(ui_Panel25, 472);
+    lv_obj_set_height(ui_Panel25, 260);
+    lv_obj_set_x(ui_Panel25, 0);
+    lv_obj_set_y(ui_Panel25, 18);
+    lv_obj_set_align(ui_Panel25, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel25, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel25, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel25, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel25, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel25, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(ui_Panel25, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label35 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label35, LV_ALIGN_TOP_LEFT);
+    lv_label_set_text(ui_Label35, "IMMUTABLE AUDIT LOG (BATCH B-7749)");
+    lv_obj_set_style_text_color(ui_Label35, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label35, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_log1 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label_log1, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_log1, 28);
+    lv_label_set_text(ui_Label_log1, "[10:14:02] Central Depot 01: Dispatched at 2.8 C | Seal: VALID");
+    lv_obj_set_style_text_color(ui_Label_log1, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_log1, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_log2 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label_log2, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_log2, 54);
+    lv_label_set_text(ui_Label_log2, "[11:45:18] Checkpoint Alpha: Temp 3.4 C | Reefer Van Link OK");
+    lv_obj_set_style_text_color(ui_Label_log2, lv_color_hex(0x00D2B4), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_log2, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_log3 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label_log3, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_log3, 80);
+    lv_label_set_text(ui_Label_log3, "[13:20:55] Checkpoint Beta: Temp 3.9 C | Cumulative Excursions: 0");
+    lv_obj_set_style_text_color(ui_Label_log3, lv_color_hex(0x00D2B4), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_log3, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_log4 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label_log4, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_log4, 106);
+    lv_label_set_text(ui_Label_log4, "[14:15:30] Dispenser Unit 04 Loaded: Temp 3.8 C | Chute Sanitized");
+    lv_obj_set_style_text_color(ui_Label_log4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_log4, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_log5 = lv_label_create(ui_Panel25);
+    lv_obj_set_align(ui_Label_log5, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_log5, 132);
+    lv_label_set_text(ui_Label_log5,
+        "[14:16:00] Cold-Chain Validation: MKT 3.6 C. Cryptographic Hash Verified.\n"
+        "Blockchain Ledger: TX# 0x7a39fe... STATUS: IMMUTABLE AUDIT PASS");
+    lv_obj_set_style_text_color(ui_Label_log5, lv_color_hex(0x94A3B8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_log5, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_Panel26, ui_event_Panel26_cb, LV_EVENT_CLICKED, NULL);
 }
 
 void ui_Screen11_screen_destroy(void)
 {
-   if (ui_Screen11) lv_obj_del(ui_Screen11);
-
-// NULL screen variables
-ui_Screen11= NULL;
-ui_Panel26= NULL;
-ui_Image11= NULL;
-ui_Panel25= NULL;
-ui_Label35= NULL;
-
+    if (ui_Screen11) lv_obj_del(ui_Screen11);
+    ui_Screen11 = NULL;
+    ui_Panel26 = NULL;
+    ui_Image11 = NULL;
+    ui_Label_scr11_title = NULL;
+    ui_Panel25 = NULL;
+    ui_Label35 = NULL;
+    ui_Label_log1 = NULL;
+    ui_Label_log2 = NULL;
+    ui_Label_log3 = NULL;
+    ui_Label_log4 = NULL;
+    ui_Label_log5 = NULL;
 }

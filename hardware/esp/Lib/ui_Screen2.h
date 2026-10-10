@@ -14,22 +14,42 @@ extern "C" {
 extern void ui_Screen2_screen_init(void);
 extern void ui_Screen2_screen_destroy(void);
 extern lv_obj_t *ui_Screen2;
-extern void ui_event_Button1( lv_event_t * e);
-extern lv_obj_t *ui_Button1;
-extern lv_obj_t *ui_Label2;
-extern lv_obj_t *ui_Button11;
-extern lv_obj_t *ui_Label32;
-extern lv_obj_t *ui_Panel1;
+
+// Header & Status
+extern lv_obj_t *ui_Panel3;
 extern lv_obj_t *ui_Label3;
 extern lv_obj_t *ui_Label4;
-extern lv_obj_t *ui_Panel3;
 extern lv_obj_t *ui_Image3;
 extern lv_obj_t *ui_Label5;
-// CUSTOM VARIABLES
+
+// Telemetry KPI Cards
+extern lv_obj_t *ui_Panel1;
+extern lv_obj_t *ui_Card_temp;
+extern lv_obj_t *ui_Label_val_temp;
+extern lv_obj_t *ui_Card_hum;
+extern lv_obj_t *ui_Label_val_hum;
+extern lv_obj_t *ui_Card_batch;
+extern lv_obj_t *ui_Label_val_batch;
+
+// Main Functional Action Buttons
+extern void ui_event_Button1(lv_event_t * e);
+extern lv_obj_t *ui_Button1;        // Shipment tracking
+extern lv_obj_t *ui_Label2;
+
+extern void ui_event_Button11(lv_event_t * e);
+extern lv_obj_t *ui_Button11;       // Medicine Dispenser
+extern lv_obj_t *ui_Label32;
+
+extern lv_obj_t *ui_Button_temp;    // Temperature Monitoring
+extern lv_obj_t *ui_Button_batch;   // Batch Verification
+
+// Bottom Bar
+extern lv_obj_t *ui_Button_alerts;  // Alerts
+extern lv_obj_t *ui_Button_sys;     // System & Diagnostics
+extern lv_obj_t *ui_Button_audit;   // Cold-Chain AI
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

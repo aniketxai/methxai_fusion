@@ -14,23 +14,34 @@ extern "C" {
 extern void ui_Screen9_screen_init(void);
 extern void ui_Screen9_screen_destroy(void);
 extern lv_obj_t *ui_Screen9;
-extern void ui_event_Button15( lv_event_t * e);
-extern lv_obj_t *ui_Button15;
-extern lv_obj_t *ui_Label1;
-extern lv_obj_t *ui_Button12;
-extern lv_obj_t *ui_Label33;
-extern lv_obj_t *ui_Panel20;
-extern lv_obj_t *ui_Label34;
+
+// Header & back button
 extern lv_obj_t *ui_Panel21;
-extern lv_obj_t *ui_Image10;
-extern lv_obj_t *ui_Label36;
 extern lv_obj_t *ui_Panel22;
 extern lv_obj_t *ui_Image12;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Image10;
+extern lv_obj_t *ui_Label36;
+extern lv_obj_t *ui_Label_scr9_title;
+
+// Diagnostics Card
+extern lv_obj_t *ui_Panel20;
+extern lv_obj_t *ui_Label34;
+extern lv_obj_t *ui_Label_diag1;
+extern lv_obj_t *ui_Label_diag2;
+extern lv_obj_t *ui_Label_diag3;
+extern lv_obj_t *ui_Label_diag4;
+
+// Action Buttons
+extern void ui_event_Button15(lv_event_t * e);
+extern lv_obj_t *ui_Button15;     // Test Uno Ping
+extern lv_obj_t *ui_Label1;
+extern lv_obj_t *ui_Button12;     // Cycle Gate Servo
+extern lv_obj_t *ui_Label33;
+extern lv_obj_t *ui_Btn_to_scr14;  // Open Motor & Sensor Test Console
+extern lv_obj_t *ui_Label_to_scr14;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

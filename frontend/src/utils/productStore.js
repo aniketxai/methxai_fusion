@@ -6,7 +6,14 @@ const CONFIG_KEY = 'methxai_config';
 export function getStoredProductRanges() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return { ...PRODUCTS, ...JSON.parse(stored) };
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Ensure stored ranges match current product definitions
+      const keys = Object.keys(parsed);
+      if (keys.length > 0 && keys.every((k) => k in PRODUCTS)) {
+        return { ...PRODUCTS, ...parsed };
+      }
+    }
   } catch (e) {
     console.warn('Failed to parse stored product ranges:', e);
   }
@@ -28,7 +35,7 @@ export function getStoredConfig() {
     wsUrl: import.meta.env.VITE_WS_URL || '',
     dataMode: (import.meta.env.VITE_API_BASE_URL ? 'api' : 'mock'),
     refreshInterval: '10',
-    operatorName: 'OP-001 / Logistics Desk',
+    operatorName: 'Aniket S. (Logistics Lead)',
     operatorId: 'OP-001',
   };
   try {

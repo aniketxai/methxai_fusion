@@ -14,15 +14,23 @@ extern "C" {
 extern void ui_Screen11_screen_init(void);
 extern void ui_Screen11_screen_destroy(void);
 extern lv_obj_t *ui_Screen11;
+
+// Header & back button
 extern lv_obj_t *ui_Panel26;
 extern lv_obj_t *ui_Image11;
+extern lv_obj_t *ui_Label_scr11_title;
+
+// Audit Trail Card
 extern lv_obj_t *ui_Panel25;
 extern lv_obj_t *ui_Label35;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Label_log1;
+extern lv_obj_t *ui_Label_log2;
+extern lv_obj_t *ui_Label_log3;
+extern lv_obj_t *ui_Label_log4;
+extern lv_obj_t *ui_Label_log5;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

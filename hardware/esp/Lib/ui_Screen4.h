@@ -14,19 +14,28 @@ extern "C" {
 extern void ui_Screen4_screen_init(void);
 extern void ui_Screen4_screen_destroy(void);
 extern lv_obj_t *ui_Screen4;
-extern lv_obj_t *ui_Button3;
-extern lv_obj_t *ui_Label6;
-extern lv_obj_t *ui_Button4;
-extern lv_obj_t *ui_Label7;
-extern lv_obj_t *ui_Panel2;
-extern lv_obj_t *ui_Label8;
+
+// Back button & header
 extern lv_obj_t *ui_Panel4;
 extern lv_obj_t *ui_Image8;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Label8;
+
+// Main audit panel
+extern lv_obj_t *ui_Panel2;
+extern lv_obj_t *ui_Label_batch_name;
+extern lv_obj_t *ui_Label_batch_meta;
+extern lv_obj_t *ui_Label_batch_cold;
+extern lv_obj_t *ui_Label_batch_result;
+extern lv_obj_t *ui_Label_batch_note;
+
+// Action Buttons
+extern lv_obj_t *ui_Button3;   // Proceed to Dispense
+extern lv_obj_t *ui_Label6;
+extern lv_obj_t *ui_Button4;   // Flag / Place on Hold
+extern lv_obj_t *ui_Label7;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

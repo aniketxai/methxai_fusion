@@ -5,45 +5,69 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_Screen1 = NULL;lv_obj_t *ui_Image2 = NULL;lv_obj_t *ui_barloading = NULL;
-// event funtions
-
-// build funtions
+lv_obj_t *ui_Screen1 = NULL;
+lv_obj_t *ui_Image2 = NULL;
+lv_obj_t *ui_barloading = NULL;
+lv_obj_t *ui_Label1_boot = NULL;
+lv_obj_t *ui_Label2_boot = NULL;
 
 void ui_Screen1_screen_init(void)
 {
-ui_Screen1 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen1, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen1, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen1, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen1 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen1, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen1, lv_color_hex(0x0A1120), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Image2 = lv_img_create(ui_Screen1);
-lv_img_set_src(ui_Image2, &ui_img_logo_png);
-lv_obj_set_width( ui_Image2, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Image2, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Image2, -2 );
-lv_obj_set_y( ui_Image2, -24 );
-lv_obj_set_align( ui_Image2, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Image2, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_Image2, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_img_set_zoom(ui_Image2,140);
+    // MethXAI Logo
+    ui_Image2 = lv_img_create(ui_Screen1);
+    lv_img_set_src(ui_Image2, &ui_img_logo_png);
+    lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);
+    lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);
+    lv_obj_set_x(ui_Image2, 0);
+    lv_obj_set_y(ui_Image2, -45);
+    lv_obj_set_align(ui_Image2, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);
+    lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_img_set_zoom(ui_Image2, 130);
 
-ui_barloading = lv_bar_create(ui_Screen1);
-lv_obj_set_width( ui_barloading, 415);
-lv_obj_set_height( ui_barloading, 10);
-lv_obj_set_x( ui_barloading, 2 );
-lv_obj_set_y( ui_barloading, 127 );
-lv_obj_set_align( ui_barloading, LV_ALIGN_CENTER );
+    // Subtitle & Project Header
+    ui_Label1_boot = lv_label_create(ui_Screen1);
+    lv_obj_set_width(ui_Label1_boot, LV_SIZE_CONTENT);
+    lv_obj_set_height(ui_Label1_boot, LV_SIZE_CONTENT);
+    lv_obj_set_x(ui_Label1_boot, 0);
+    lv_obj_set_y(ui_Label1_boot, 55);
+    lv_obj_set_align(ui_Label1_boot, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label1_boot, "IOT-03: Real-Time Cold Chain Monitoring");
+    lv_obj_set_style_text_color(ui_Label1_boot, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label1_boot, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Label2_boot = lv_label_create(ui_Screen1);
+    lv_obj_set_width(ui_Label2_boot, LV_SIZE_CONTENT);
+    lv_obj_set_height(ui_Label2_boot, LV_SIZE_CONTENT);
+    lv_obj_set_x(ui_Label2_boot, 0);
+    lv_obj_set_y(ui_Label2_boot, 78);
+    lv_obj_set_align(ui_Label2_boot, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label2_boot, "Vaccine Logistics & Intelligent Medicine Distribution");
+    lv_obj_set_style_text_color(ui_Label2_boot, lv_color_hex(0x94A3B8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label2_boot, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Boot progress bar
+    ui_barloading = lv_bar_create(ui_Screen1);
+    lv_obj_set_width(ui_barloading, 380);
+    lv_obj_set_height(ui_barloading, 8);
+    lv_obj_set_x(ui_barloading, 0);
+    lv_obj_set_y(ui_barloading, 115);
+    lv_obj_set_align(ui_barloading, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_barloading, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_barloading, lv_color_hex(0x00A63E), LV_PART_INDICATOR | LV_STATE_DEFAULT);
 }
 
 void ui_Screen1_screen_destroy(void)
 {
-   if (ui_Screen1) lv_obj_del(ui_Screen1);
-
-// NULL screen variables
-ui_Screen1= NULL;
-ui_Image2= NULL;
-ui_barloading= NULL;
-
+    if (ui_Screen1) lv_obj_del(ui_Screen1);
+    ui_Screen1 = NULL;
+    ui_Image2 = NULL;
+    ui_barloading = NULL;
+    ui_Label1_boot = NULL;
+    ui_Label2_boot = NULL;
 }

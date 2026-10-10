@@ -14,24 +14,32 @@ extern "C" {
 extern void ui_Screen8_screen_init(void);
 extern void ui_Screen8_screen_destroy(void);
 extern lv_obj_t *ui_Screen8;
+
+// Header & back button
 extern lv_obj_t *ui_Panel16;
 extern lv_obj_t *ui_Image9;
+extern lv_obj_t *ui_Label_scr8_title;
+extern lv_obj_t *ui_Label_scr8_badge;
+
+// Left Logistics Details Panel
 extern lv_obj_t *ui_Panel17;
 extern lv_obj_t *ui_Label24;
 extern lv_obj_t *ui_Label25;
+
+// Right Temperature KPI Panel
 extern lv_obj_t *ui_Panel18;
 extern lv_obj_t *ui_Label26;
 extern lv_obj_t *ui_Label27;
 extern lv_obj_t *ui_Label28;
+
+// Right Humidity & MKT Panel
 extern lv_obj_t *ui_Panel19;
 extern lv_obj_t *ui_Label29;
 extern lv_obj_t *ui_Label30;
 extern lv_obj_t *ui_Label31;
-// CUSTOM VARIABLES
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

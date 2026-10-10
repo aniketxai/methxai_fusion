@@ -14,16 +14,19 @@ extern "C" {
 extern void ui_Screen12_screen_init(void);
 extern void ui_Screen12_screen_destroy(void);
 extern lv_obj_t *ui_Screen12;
+
+// Header & back button
 extern lv_obj_t *ui_Panel27;
 extern lv_obj_t *ui_Image14;
+extern lv_obj_t *ui_Label_scr12_title;
+
+// Diagnostic Report Card
 extern lv_obj_t *ui_Panel28;
-extern lv_obj_t *ui_Label39;
-extern lv_obj_t *ui_Label41;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Label39;       // Report header
+extern lv_obj_t *ui_Label41;       // Dynamic report text updated by Lib.ino
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

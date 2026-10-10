@@ -14,10 +14,20 @@ extern "C" {
 extern void ui_Screen3_screen_init(void);
 extern void ui_Screen3_screen_destroy(void);
 extern lv_obj_t *ui_Screen3;
-extern void ui_event_Panel12( lv_event_t * e);
+
+// Back button & header
+extern void ui_event_Panel12(lv_event_t * e);
 extern lv_obj_t *ui_Panel12;
 extern lv_obj_t *ui_Image5;
+extern lv_obj_t *ui_Label_scr3_title;
+extern lv_obj_t *ui_Label_scr3_badge;
+
+// Dispenser container & status banner
+extern lv_obj_t *ui_Panel_dispense_banner;
+extern lv_obj_t *ui_Label_dispense_banner;
 extern lv_obj_t *ui_Panel13;
+
+// Dispenser Buttons & Labels (M3, M4, R0, R1, Stepper Rotor)
 extern lv_obj_t *ui_Button5;
 extern lv_obj_t *ui_Label17;
 extern lv_obj_t *ui_Button6;
@@ -30,11 +40,9 @@ extern lv_obj_t *ui_Button9;
 extern lv_obj_t *ui_Label21;
 extern lv_obj_t *ui_Button10;
 extern lv_obj_t *ui_Label22;
-// CUSTOM VARIABLES
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

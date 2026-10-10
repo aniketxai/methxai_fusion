@@ -14,19 +14,30 @@ extern "C" {
 extern void ui_Screen7_screen_init(void);
 extern void ui_Screen7_screen_destroy(void);
 extern lv_obj_t *ui_Screen7;
+
+// Header & back button
 extern lv_obj_t *ui_Panel11;
 extern lv_obj_t *ui_Image6;
+extern lv_obj_t *ui_Label_scr7_title;
+extern lv_obj_t *ui_Label_scr7_badge;
+
+// Alert List Card
 extern lv_obj_t *ui_Panel10;
+extern lv_obj_t *ui_Label_al1;
+extern lv_obj_t *ui_Label_al2;
+extern lv_obj_t *ui_Label_al3;
+extern lv_obj_t *ui_Label_al4;
+
+// Action Buttons
+extern lv_obj_t *ui_Panel15;
 extern lv_obj_t *ui_Label15;
 extern lv_obj_t *ui_Label16;
-extern lv_obj_t *ui_Panel15;
 extern lv_obj_t *ui_Image7;
 extern lv_obj_t *ui_Spinner2;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Btn_alarm_test;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

@@ -14,20 +14,31 @@ extern "C" {
 extern void ui_Screen5_screen_init(void);
 extern void ui_Screen5_screen_destroy(void);
 extern lv_obj_t *ui_Screen5;
-extern lv_obj_t *ui_Panel5;
-extern lv_obj_t *ui_Label11;
-extern lv_obj_t *ui_Label9;
+
+// Header & back button
 extern lv_obj_t *ui_Panel6;
 extern lv_obj_t *ui_Image1;
+extern lv_obj_t *ui_Label_scr5_title;
+extern lv_obj_t *ui_Label_scr5_tag;
+
+// Left Live Readouts Panel
 extern lv_obj_t *ui_Panel7;
-extern lv_obj_t *ui_Label10;
-extern lv_obj_t *ui_Label12;
-extern lv_obj_t *ui_Slider1;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Label10;      // 3.8 deg C
+extern lv_obj_t *ui_Label12;      // Humidity
+extern lv_obj_t *ui_Label_scr5_range;
+extern lv_obj_t *ui_Label_scr5_sensor;
+extern lv_obj_t *ui_Label_scr5_update;
+
+// Right Chart & History Panel
+extern lv_obj_t *ui_Panel5;
+extern lv_obj_t *ui_Label11;      // Chart title
+extern lv_obj_t *ui_Label9;       // Min/Max summary
+extern lv_obj_t *ui_Slider1;      // Preserved slider
+extern lv_obj_t *ui_Chart_temp;   // LVGL Line Chart
+extern lv_chart_series_t *ui_Series_temp;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

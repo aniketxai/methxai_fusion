@@ -14,12 +14,15 @@ extern "C" {
 extern void ui_Screen13_screen_init(void);
 extern void ui_Screen13_screen_destroy(void);
 extern lv_obj_t *ui_Screen13;
-extern lv_obj_t *ui_Label38;
-// CUSTOM VARIABLES
+
+extern lv_obj_t *ui_Panel_alarm_card;
+extern lv_obj_t *ui_Label38;               // Excursion Alert Title
+extern lv_obj_t *ui_Label_alarm_sub;
+extern lv_obj_t *ui_Label_alarm_msg;
+extern lv_obj_t *ui_Btn_alarm_reset;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

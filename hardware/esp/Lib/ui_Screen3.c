@@ -4,179 +4,256 @@
 // Project name: methxai
 
 #include "ui.h"
+#include "cold_chain_controller.h"
 
-lv_obj_t *ui_Screen3 = NULL;lv_obj_t *ui_Panel12 = NULL;lv_obj_t *ui_Image5 = NULL;lv_obj_t *ui_Panel13 = NULL;lv_obj_t *ui_Button5 = NULL;lv_obj_t *ui_Label17 = NULL;lv_obj_t *ui_Button6 = NULL;lv_obj_t *ui_Label18 = NULL;lv_obj_t *ui_Button7 = NULL;lv_obj_t *ui_Label19 = NULL;lv_obj_t *ui_Button8 = NULL;lv_obj_t *ui_Label20 = NULL;lv_obj_t *ui_Button9 = NULL;lv_obj_t *ui_Label21 = NULL;lv_obj_t *ui_Button10 = NULL;lv_obj_t *ui_Label22 = NULL;
-// event funtions
-void ui_event_Panel12( lv_event_t * e) {
-    lv_event_code_t event_code = lv_event_get_code(e);
+lv_obj_t *ui_Screen3 = NULL;
+lv_obj_t *ui_Panel12 = NULL;
+lv_obj_t *ui_Image5 = NULL;
+lv_obj_t *ui_Label_scr3_title = NULL;
+lv_obj_t *ui_Label_scr3_badge = NULL;
 
-if ( event_code == LV_EVENT_CLICKED) {
-      _ui_screen_change( &ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_Screen2_screen_init);
+lv_obj_t *ui_Panel_dispense_banner = NULL;
+lv_obj_t *ui_Label_dispense_banner = NULL;
+lv_obj_t *ui_Panel13 = NULL;
+
+lv_obj_t *ui_Button5 = NULL;
+lv_obj_t *ui_Label17 = NULL;
+lv_obj_t *ui_Button6 = NULL;
+lv_obj_t *ui_Label18 = NULL;
+lv_obj_t *ui_Button7 = NULL;
+lv_obj_t *ui_Label19 = NULL;
+lv_obj_t *ui_Button8 = NULL;
+lv_obj_t *ui_Label20 = NULL;
+lv_obj_t *ui_Button9 = NULL;
+lv_obj_t *ui_Label21 = NULL;
+lv_obj_t *ui_Button10 = NULL;
+lv_obj_t *ui_Label22 = NULL;
+
+void ui_event_Panel12(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen2_screen_init);
+    }
 }
-}
-
-// build funtions
 
 void ui_Screen3_screen_init(void)
 {
-ui_Screen3 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen3, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen3, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen3, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen3 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen3, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen3, lv_color_hex(0x0A1120), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel12 = lv_obj_create(ui_Screen3);
-lv_obj_set_width( ui_Panel12, 56);
-lv_obj_set_height( ui_Panel12, 33);
-lv_obj_set_x( ui_Panel12, -209 );
-lv_obj_set_y( ui_Panel12, -141 );
-lv_obj_set_align( ui_Panel12, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel12, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel12, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel12, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // ================= HEADER BAR =================
+    lv_obj_t *head_bar = lv_obj_create(ui_Screen3);
+    lv_obj_set_width(head_bar, 472);
+    lv_obj_set_height(head_bar, 34);
+    lv_obj_set_x(head_bar, 0);
+    lv_obj_set_y(head_bar, -139);
+    lv_obj_set_align(head_bar, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(head_bar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(head_bar, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(head_bar, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(head_bar, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(head_bar, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(head_bar, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Image5 = lv_img_create(ui_Panel12);
-lv_img_set_src(ui_Image5, &ui_img_1046361127);
-lv_obj_set_width( ui_Image5, LV_SIZE_CONTENT);  /// 24
-lv_obj_set_height( ui_Image5, LV_SIZE_CONTENT);   /// 24
-lv_obj_set_x( ui_Image5, -9 );
-lv_obj_set_y( ui_Image5, -16 );
-lv_obj_add_flag( ui_Image5, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_Image5, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    // Back button
+    ui_Panel12 = lv_obj_create(head_bar);
+    lv_obj_set_width(ui_Panel12, 42);
+    lv_obj_set_height(ui_Panel12, 28);
+    lv_obj_set_align(ui_Panel12, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Panel12, 2);
+    lv_obj_clear_flag(ui_Panel12, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel12, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel12, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel12, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel13 = lv_obj_create(ui_Screen3);
-lv_obj_set_width( ui_Panel13, 436);
-lv_obj_set_height( ui_Panel13, 251);
-lv_obj_set_x( ui_Panel13, 0 );
-lv_obj_set_y( ui_Panel13, 7 );
-lv_obj_set_align( ui_Panel13, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel13, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel13, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel13, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel13, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel13, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Image5 = lv_img_create(ui_Panel12);
+    lv_img_set_src(ui_Image5, &ui_img_1046361127);
+    lv_obj_set_align(ui_Image5, LV_ALIGN_CENTER);
 
-ui_Button5 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button5, 112);
-lv_obj_set_height( ui_Button5, 103);
-lv_obj_set_x( ui_Button5, -146 );
-lv_obj_set_y( ui_Button5, -61 );
-lv_obj_set_align( ui_Button5, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button5, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button5, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    // Title
+    ui_Label_scr3_title = lv_label_create(head_bar);
+    lv_obj_set_align(ui_Label_scr3_title, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Label_scr3_title, 52);
+    lv_label_set_text(ui_Label_scr3_title, "Medicine Dispenser - Product Selection");
+    lv_obj_set_style_text_color(ui_Label_scr3_title, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_scr3_title, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label17 = lv_label_create(ui_Button5);
-lv_obj_set_width( ui_Label17, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label17, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label17, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label17,"ENO");
-lv_obj_set_style_text_font(ui_Label17, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // Right batch badge
+    ui_Label_scr3_badge = lv_label_create(head_bar);
+    lv_obj_set_align(ui_Label_scr3_badge, LV_ALIGN_RIGHT_MID);
+    lv_obj_set_x(ui_Label_scr3_badge, -8);
+    lv_label_set_text(ui_Label_scr3_badge, "BATCH B-7749 [RELEASED]");
+    lv_obj_set_style_text_color(ui_Label_scr3_badge, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_scr3_badge, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button6 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button6, 112);
-lv_obj_set_height( ui_Button6, 103);
-lv_obj_set_x( ui_Button6, -1 );
-lv_obj_set_y( ui_Button6, -62 );
-lv_obj_set_align( ui_Button6, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button6, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button6, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    // ================= SAFETY INTEGRITY BANNER =================
+    ui_Panel_dispense_banner = lv_obj_create(ui_Screen3);
+    lv_obj_set_width(ui_Panel_dispense_banner, 472);
+    lv_obj_set_height(ui_Panel_dispense_banner, 28);
+    lv_obj_set_x(ui_Panel_dispense_banner, 0);
+    lv_obj_set_y(ui_Panel_dispense_banner, -104);
+    lv_obj_set_align(ui_Panel_dispense_banner, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel_dispense_banner, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel_dispense_banner, lv_color_hex(0x0D3820), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel_dispense_banner, lv_color_hex(0x00A63E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel_dispense_banner, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel_dispense_banner, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(ui_Panel_dispense_banner, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label18 = lv_label_create(ui_Button6);
-lv_obj_set_width( ui_Label18, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label18, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label18, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label18,"ORS");
-lv_obj_set_style_text_font(ui_Label18, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Label_dispense_banner = lv_label_create(ui_Panel_dispense_banner);
+    lv_obj_set_align(ui_Label_dispense_banner, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label_dispense_banner, "COLD-CHAIN INTEGRITY VERIFIED - HARDWARE DISPENSER ARMED");
+    lv_obj_set_style_text_color(ui_Label_dispense_banner, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_dispense_banner, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button7 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button7, 112);
-lv_obj_set_height( ui_Button7, 103);
-lv_obj_set_x( ui_Button7, 141 );
-lv_obj_set_y( ui_Button7, -61 );
-lv_obj_set_align( ui_Button7, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button7, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button7, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    // ================= 6 DISPENSER SELECTIONS =================
+    ui_Panel13 = lv_obj_create(ui_Screen3);
+    lv_obj_set_width(ui_Panel13, 472);
+    lv_obj_set_height(ui_Panel13, 224);
+    lv_obj_set_x(ui_Panel13, 0);
+    lv_obj_set_y(ui_Panel13, 26);
+    lv_obj_set_align(ui_Panel13, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel13, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel13, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel13, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel13, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel13, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label19 = lv_label_create(ui_Button7);
-lv_obj_set_width( ui_Label19, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label19, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label19, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label19,"PARACETAMOL");
-lv_obj_set_style_text_font(ui_Label19, &lv_font_montserrat_12, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // Row 1 Buttons (y = -48)
+    // 1. Medicine M1 (M3 BO Motor)
+    ui_Button5 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button5, 144);
+    lv_obj_set_height(ui_Button5, 94);
+    lv_obj_set_x(ui_Button5, -150);
+    lv_obj_set_y(ui_Button5, -48);
+    lv_obj_set_align(ui_Button5, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button5, lv_color_hex(0x1A2840), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button5, lv_color_hex(0x2A3D60), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button5, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button5, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button8 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button8, 112);
-lv_obj_set_height( ui_Button8, 103);
-lv_obj_set_x( ui_Button8, -141 );
-lv_obj_set_y( ui_Button8, 63 );
-lv_obj_set_align( ui_Button8, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button8, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button8, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Label17 = lv_label_create(ui_Button5);
+    lv_obj_set_align(ui_Label17, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label17, "Medicine M1\nSlot 1 (M3)\n[2-8 C Safe]");
+    lv_obj_set_style_text_align(ui_Label17, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label17, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label20 = lv_label_create(ui_Button8);
-lv_obj_set_width( ui_Label20, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label20, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label20, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label20,"DSR");
-lv_obj_set_style_text_font(ui_Label20, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // 2. Medicine M2 (M4 BO Motor)
+    ui_Button6 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button6, 144);
+    lv_obj_set_height(ui_Button6, 94);
+    lv_obj_set_x(ui_Button6, 0);
+    lv_obj_set_y(ui_Button6, -48);
+    lv_obj_set_align(ui_Button6, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button6, lv_color_hex(0x1A2840), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button6, lv_color_hex(0x2A3D60), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button6, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button6, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button9 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button9, 112);
-lv_obj_set_height( ui_Button9, 103);
-lv_obj_set_x( ui_Button9, 3 );
-lv_obj_set_y( ui_Button9, 62 );
-lv_obj_set_align( ui_Button9, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button9, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button9, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Label18 = lv_label_create(ui_Button6);
+    lv_obj_set_align(ui_Label18, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label18, "Medicine M2\nSlot 2 (M4)\n[2-8 C Safe]");
+    lv_obj_set_style_text_align(ui_Label18, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label18, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label21 = lv_label_create(ui_Button9);
-lv_obj_set_width( ui_Label21, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label21, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label21, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label21,"SPAS");
-lv_obj_set_style_text_font(ui_Label21, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // 3. Medicine M3 (Relay 0)
+    ui_Button7 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button7, 144);
+    lv_obj_set_height(ui_Button7, 94);
+    lv_obj_set_x(ui_Button7, 150);
+    lv_obj_set_y(ui_Button7, -48);
+    lv_obj_set_align(ui_Button7, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button7, lv_color_hex(0x1A2840), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button7, lv_color_hex(0x2A3D60), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button7, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button7, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button10 = lv_btn_create(ui_Panel13);
-lv_obj_set_width( ui_Button10, 112);
-lv_obj_set_height( ui_Button10, 103);
-lv_obj_set_x( ui_Button10, 145 );
-lv_obj_set_y( ui_Button10, 62 );
-lv_obj_set_align( ui_Button10, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button10, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button10, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Label19 = lv_label_create(ui_Button7);
+    lv_obj_set_align(ui_Label19, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label19, "Medicine M3\nSlot 3 (Relay 0)\n[2-8 C Safe]");
+    lv_obj_set_style_text_align(ui_Label19, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label19, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label22 = lv_label_create(ui_Button10);
-lv_obj_set_width( ui_Label22, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label22, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label22, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label22,"CETRIZ");
-lv_obj_set_style_text_font(ui_Label22, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // Row 2 Buttons (y = 52)
+    // 4. Medicine M4 (Relay 1)
+    ui_Button8 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button8, 144);
+    lv_obj_set_height(ui_Button8, 94);
+    lv_obj_set_x(ui_Button8, -150);
+    lv_obj_set_y(ui_Button8, 52);
+    lv_obj_set_align(ui_Button8, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button8, lv_color_hex(0x1A2840), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button8, lv_color_hex(0x2A3D60), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button8, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button8, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-lv_obj_add_event_cb(ui_Panel12, ui_event_Panel12, LV_EVENT_ALL, NULL);
+    ui_Label20 = lv_label_create(ui_Button8);
+    lv_obj_set_align(ui_Label20, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label20, "Medicine M4\nSlot 4 (Relay 1)\n[2-8 C Safe]");
+    lv_obj_set_style_text_align(ui_Label20, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label20, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    // 5. Pill Rotor Forward (Step 512 + Gate)
+    ui_Button9 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button9, 144);
+    lv_obj_set_height(ui_Button9, 94);
+    lv_obj_set_x(ui_Button9, 0);
+    lv_obj_set_y(ui_Button9, 52);
+    lv_obj_set_align(ui_Button9, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button9, lv_color_hex(0x00A63E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button9, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button9, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button9, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label21 = lv_label_create(ui_Button9);
+    lv_obj_set_align(ui_Label21, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label21, "Pill Rotor FWD\nStepper + Gate\n[Dispense 1 Unit]");
+    lv_obj_set_style_text_align(ui_Label21, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label21, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // 6. Pill Rotor Reverse (Step -512 + Gate)
+    ui_Button10 = lv_btn_create(ui_Panel13);
+    lv_obj_set_width(ui_Button10, 144);
+    lv_obj_set_height(ui_Button10, 94);
+    lv_obj_set_x(ui_Button10, 150);
+    lv_obj_set_y(ui_Button10, 52);
+    lv_obj_set_align(ui_Button10, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button10, lv_color_hex(0x1A2840), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button10, lv_color_hex(0x2A3D60), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button10, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button10, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label22 = lv_label_create(ui_Button10);
+    lv_obj_set_align(ui_Label22, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label22, "Pill Rotor REV\nStepper -512\n[Reverse / Clear]");
+    lv_obj_set_style_text_align(ui_Label22, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(ui_Label22, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_Panel12, ui_event_Panel12, LV_EVENT_ALL, NULL);
 }
 
 void ui_Screen3_screen_destroy(void)
 {
-   if (ui_Screen3) lv_obj_del(ui_Screen3);
-
-// NULL screen variables
-ui_Screen3= NULL;
-ui_Panel12= NULL;
-ui_Image5= NULL;
-ui_Panel13= NULL;
-ui_Button5= NULL;
-ui_Label17= NULL;
-ui_Button6= NULL;
-ui_Label18= NULL;
-ui_Button7= NULL;
-ui_Label19= NULL;
-ui_Button8= NULL;
-ui_Label20= NULL;
-ui_Button9= NULL;
-ui_Label21= NULL;
-ui_Button10= NULL;
-ui_Label22= NULL;
-
+    if (ui_Screen3) lv_obj_del(ui_Screen3);
+    ui_Screen3 = NULL;
+    ui_Panel12 = NULL;
+    ui_Image5 = NULL;
+    ui_Label_scr3_title = NULL;
+    ui_Label_scr3_badge = NULL;
+    ui_Panel_dispense_banner = NULL;
+    ui_Label_dispense_banner = NULL;
+    ui_Panel13 = NULL;
+    ui_Button5 = NULL;
+    ui_Label17 = NULL;
+    ui_Button6 = NULL;
+    ui_Label18 = NULL;
+    ui_Button7 = NULL;
+    ui_Label19 = NULL;
+    ui_Button8 = NULL;
+    ui_Label20 = NULL;
+    ui_Button9 = NULL;
+    ui_Label21 = NULL;
+    ui_Button10 = NULL;
+    ui_Label22 = NULL;
 }

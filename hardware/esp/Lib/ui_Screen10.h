@@ -14,18 +14,27 @@ extern "C" {
 extern void ui_Screen10_screen_init(void);
 extern void ui_Screen10_screen_destroy(void);
 extern lv_obj_t *ui_Screen10;
-extern lv_obj_t *ui_Panel14;
-extern lv_obj_t *ui_Label37;
+
+// Header & back button
 extern lv_obj_t *ui_Panel24;
 extern lv_obj_t *ui_Image13;
+extern lv_obj_t *ui_Label_scr10_title;
+
+// Verification Checklist Card
+extern lv_obj_t *ui_Panel14;
+extern lv_obj_t *ui_Label37;
+extern lv_obj_t *ui_Label_chk1;
+extern lv_obj_t *ui_Label_chk2;
+extern lv_obj_t *ui_Label_chk3;
+extern lv_obj_t *ui_Label_chk4;
+
+// Trigger Panel & Button (Preserved for Lib.ino event_panel23)
 extern lv_obj_t *ui_Panel23;
 extern lv_obj_t *ui_Button2;
 extern lv_obj_t *ui_Label23;
-// CUSTOM VARIABLES
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-

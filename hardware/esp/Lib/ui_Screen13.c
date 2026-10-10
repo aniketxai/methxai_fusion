@@ -5,33 +5,90 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_Screen13 = NULL;lv_obj_t *ui_Label38 = NULL;
-// event funtions
+lv_obj_t *ui_Screen13 = NULL;
+lv_obj_t *ui_Panel_alarm_card = NULL;
+lv_obj_t *ui_Label38 = NULL;
+lv_obj_t *ui_Label_alarm_sub = NULL;
+lv_obj_t *ui_Label_alarm_msg = NULL;
+lv_obj_t *ui_Btn_alarm_reset = NULL;
 
-// build funtions
+static void ui_event_Btn_alarm_reset_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen2_screen_init);
+    }
+}
 
 void ui_Screen13_screen_init(void)
 {
-ui_Screen13 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen13, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen13, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen13, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen13 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen13, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen13, lv_color_hex(0x4C0519), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen13, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label38 = lv_label_create(ui_Screen13);
-lv_obj_set_width( ui_Label38, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label38, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_Label38, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label38,"ERROR");
-lv_obj_set_style_text_font(ui_Label38, &lv_font_montserrat_48, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Panel_alarm_card = lv_obj_create(ui_Screen13);
+    lv_obj_set_width(ui_Panel_alarm_card, 440);
+    lv_obj_set_height(ui_Panel_alarm_card, 260);
+    lv_obj_set_x(ui_Panel_alarm_card, 0);
+    lv_obj_set_y(ui_Panel_alarm_card, 0);
+    lv_obj_set_align(ui_Panel_alarm_card, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel_alarm_card, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel_alarm_card, lv_color_hex(0x881337), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel_alarm_card, lv_color_hex(0xEF4444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel_alarm_card, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel_alarm_card, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(ui_Panel_alarm_card, 14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Label38 = lv_label_create(ui_Panel_alarm_card);
+    lv_obj_set_align(ui_Label38, LV_ALIGN_TOP_MID);
+    lv_label_set_text(ui_Label38, "CRITICAL EXCURSION ALARM");
+    lv_obj_set_style_text_color(ui_Label38, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label38, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_alarm_sub = lv_label_create(ui_Panel_alarm_card);
+    lv_obj_set_align(ui_Label_alarm_sub, LV_ALIGN_TOP_MID);
+    lv_obj_set_y(ui_Label_alarm_sub, 30);
+    lv_label_set_text(ui_Label_alarm_sub, "COLD CHAIN INTEGRITY BREACHED (> 8.0 C)");
+    lv_obj_set_style_text_color(ui_Label_alarm_sub, lv_color_hex(0xFDE047), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_alarm_sub, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_alarm_msg = lv_label_create(ui_Panel_alarm_card);
+    lv_obj_set_align(ui_Label_alarm_msg, LV_ALIGN_TOP_MID);
+    lv_obj_set_y(ui_Label_alarm_msg, 64);
+    lv_label_set_text(ui_Label_alarm_msg,
+        "EMERGENCY PROTOCOL ACTIVATED\n\n"
+        "Vaccine biological efficacy cannot be validated.\n"
+        "Dispenser mechanism has been emergency locked.\n"
+        "Manual quality review is required before product release.");
+    lv_obj_set_style_text_align(ui_Label_alarm_msg, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(ui_Label_alarm_msg, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_alarm_msg, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Btn_alarm_reset = lv_btn_create(ui_Panel_alarm_card);
+    lv_obj_set_width(ui_Btn_alarm_reset, 280);
+    lv_obj_set_height(ui_Btn_alarm_reset, 44);
+    lv_obj_set_x(ui_Btn_alarm_reset, 0);
+    lv_obj_set_y(ui_Btn_alarm_reset, 180);
+    lv_obj_set_align(ui_Btn_alarm_reset, LV_ALIGN_TOP_MID);
+    lv_obj_set_style_bg_color(ui_Btn_alarm_reset, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Btn_alarm_reset, lv_color_hex(0x475569), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Btn_alarm_reset, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Btn_alarm_reset, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *lbl_btn = lv_label_create(ui_Btn_alarm_reset);
+    lv_obj_set_align(lbl_btn, LV_ALIGN_CENTER);
+    lv_label_set_text(lbl_btn, "ACKNOWLEDGE & RETURN");
+    lv_obj_set_style_text_font(lbl_btn, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_Btn_alarm_reset, ui_event_Btn_alarm_reset_cb, LV_EVENT_CLICKED, NULL);
 }
 
 void ui_Screen13_screen_destroy(void)
 {
-   if (ui_Screen13) lv_obj_del(ui_Screen13);
-
-// NULL screen variables
-ui_Screen13= NULL;
-ui_Label38= NULL;
-
+    if (ui_Screen13) lv_obj_del(ui_Screen13);
+    ui_Screen13 = NULL;
+    ui_Panel_alarm_card = NULL;
+    ui_Label38 = NULL;
+    ui_Label_alarm_sub = NULL;
+    ui_Label_alarm_msg = NULL;
+    ui_Btn_alarm_reset = NULL;
 }

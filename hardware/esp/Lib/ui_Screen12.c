@@ -5,78 +5,109 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_Screen12 = NULL;lv_obj_t *ui_Panel27 = NULL;lv_obj_t *ui_Image14 = NULL;lv_obj_t *ui_Panel28 = NULL;lv_obj_t *ui_Label39 = NULL;lv_obj_t *ui_Label41 = NULL;
-// event funtions
+lv_obj_t *ui_Screen12 = NULL;
+lv_obj_t *ui_Panel27 = NULL;
+lv_obj_t *ui_Image14 = NULL;
+lv_obj_t *ui_Label_scr12_title = NULL;
 
-// build funtions
+lv_obj_t *ui_Panel28 = NULL;
+lv_obj_t *ui_Label39 = NULL;
+lv_obj_t *ui_Label41 = NULL;
+
+static void ui_event_Panel27_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen2_screen_init);
+    }
+}
 
 void ui_Screen12_screen_init(void)
 {
-ui_Screen12 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen12, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen12, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen12 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen12, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen12, lv_color_hex(0x0A1120), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen12, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel27 = lv_obj_create(ui_Screen12);
-lv_obj_set_width( ui_Panel27, 45);
-lv_obj_set_height( ui_Panel27, 33);
-lv_obj_set_x( ui_Panel27, -214 );
-lv_obj_set_y( ui_Panel27, -140 );
-lv_obj_set_align( ui_Panel27, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel27, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel27, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel27, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel27, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel27, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // ================= HEADER =================
+    lv_obj_t *head_bar = lv_obj_create(ui_Screen12);
+    lv_obj_set_width(head_bar, 472);
+    lv_obj_set_height(head_bar, 34);
+    lv_obj_set_x(head_bar, 0);
+    lv_obj_set_y(head_bar, -139);
+    lv_obj_set_align(head_bar, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(head_bar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(head_bar, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(head_bar, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(head_bar, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(head_bar, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(head_bar, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Image14 = lv_img_create(ui_Panel27);
-lv_img_set_src(ui_Image14, &ui_img_1046361127);
-lv_obj_set_width( ui_Image14, LV_SIZE_CONTENT);  /// 24
-lv_obj_set_height( ui_Image14, LV_SIZE_CONTENT);   /// 24
-lv_obj_set_x( ui_Image14, -9 );
-lv_obj_set_y( ui_Image14, -16 );
-lv_obj_add_flag( ui_Image14, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_Image14, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Panel27 = lv_obj_create(head_bar);
+    lv_obj_set_width(ui_Panel27, 42);
+    lv_obj_set_height(ui_Panel27, 28);
+    lv_obj_set_align(ui_Panel27, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Panel27, 2);
+    lv_obj_clear_flag(ui_Panel27, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel27, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel27, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel27, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel28 = lv_obj_create(ui_Screen12);
-lv_obj_set_width( ui_Panel28, 443);
-lv_obj_set_height( ui_Panel28, 258);
-lv_obj_set_x( ui_Panel28, 0 );
-lv_obj_set_y( ui_Panel28, 11 );
-lv_obj_set_align( ui_Panel28, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel28, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Image14 = lv_img_create(ui_Panel27);
+    lv_img_set_src(ui_Image14, &ui_img_1046361127);
+    lv_obj_set_align(ui_Image14, LV_ALIGN_CENTER);
 
-ui_Label39 = lv_label_create(ui_Panel28);
-lv_obj_set_width( ui_Label39, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label39, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label39, -194 );
-lv_obj_set_y( ui_Label39, -92 );
-lv_obj_set_align( ui_Label39, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label39,"AI:- ");
-lv_obj_set_style_text_color(ui_Label39, lv_color_hex(0xF80019), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_Label39, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_Label39, &lv_font_montserrat_22, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Label_scr12_title = lv_label_create(head_bar);
+    lv_obj_set_align(ui_Label_scr12_title, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Label_scr12_title, 52);
+    lv_label_set_text(ui_Label_scr12_title, "MethXAI Cold-Chain Audit & Diagnostic Engine");
+    lv_obj_set_style_text_color(ui_Label_scr12_title, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_scr12_title, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label41 = lv_label_create(ui_Panel28);
-lv_obj_set_width( ui_Label41, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label41, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label41, 22 );
-lv_obj_set_y( ui_Label41, -91 );
-lv_obj_set_align( ui_Label41, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label41,"FEVER DETACHTED ,PLEASE TAKE YOUR MEDICIENE");
+    // ================= REPORT CONTAINER =================
+    ui_Panel28 = lv_obj_create(ui_Screen12);
+    lv_obj_set_width(ui_Panel28, 472);
+    lv_obj_set_height(ui_Panel28, 260);
+    lv_obj_set_x(ui_Panel28, 0);
+    lv_obj_set_y(ui_Panel28, 18);
+    lv_obj_set_align(ui_Panel28, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel28, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel28, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel28, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel28, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel28, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(ui_Panel28, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Label39 = lv_label_create(ui_Panel28);
+    lv_obj_set_align(ui_Label39, LV_ALIGN_TOP_LEFT);
+    lv_label_set_text(ui_Label39, "DIAGNOSTIC & AUDIT REPORT:");
+    lv_obj_set_style_text_color(ui_Label39, lv_color_hex(0x00D2B4), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label39, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Dynamic Label updated by Lib.ino
+    ui_Label41 = lv_label_create(ui_Panel28);
+    lv_obj_set_width(ui_Label41, 440);
+    lv_obj_set_align(ui_Label41, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label41, 32);
+    lv_label_set_long_mode(ui_Label41, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(ui_Label41,
+        "COLD-CHAIN AUDIT: VERIFIED PASSED\n\n"
+        "Batch B-7749 (Covaxin 0.5ml) maintained continuous 2.0 C - 8.0 C safe band.\n"
+        "No thermal excursions recorded during 14.2h transit.\n"
+        "Mean Kinetic Temperature (MKT): 3.8 C.\n\n"
+        "Vaccine biological efficacy verified. Authorized for patient distribution.");
+    lv_obj_set_style_text_color(ui_Label41, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label41, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_Panel27, ui_event_Panel27_cb, LV_EVENT_CLICKED, NULL);
 }
 
 void ui_Screen12_screen_destroy(void)
 {
-   if (ui_Screen12) lv_obj_del(ui_Screen12);
-
-// NULL screen variables
-ui_Screen12= NULL;
-ui_Panel27= NULL;
-ui_Image14= NULL;
-ui_Panel28= NULL;
-ui_Label39= NULL;
-ui_Label41= NULL;
-
+    if (ui_Screen12) lv_obj_del(ui_Screen12);
+    ui_Screen12 = NULL;
+    ui_Panel27 = NULL;
+    ui_Image14 = NULL;
+    ui_Label_scr12_title = NULL;
+    ui_Panel28 = NULL;
+    ui_Label39 = NULL;
+    ui_Label41 = NULL;
 }

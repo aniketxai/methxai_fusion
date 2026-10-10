@@ -6,6 +6,7 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
+#include "cold_chain_controller.h"
 
 #include "ui_Screen1.h"   // Contains ui_barloading
 #include "ui_Screen2.h"   // Target screen after loading
@@ -32,18 +33,19 @@ static void loading_timer_cb(lv_timer_t * timer)
 {
     LV_UNUSED(timer);
 
-    loading_value += 2;   // Loading speed (increase for faster)
+    loading_value += 4;   // Smooth responsive boot loading
 
     lv_bar_set_value(ui_barloading, loading_value, LV_ANIM_ON);
 
     if(loading_value >= 100)
     {
         lv_timer_del(loading_timer);
+        loading_timer = NULL;
 
-        // Switch to Screen2 with fade animation
+        // Switch to Screen2 (Cold-Chain Home Overview) with fade animation
         lv_scr_load_anim(ui_Screen2,
                          LV_SCR_LOAD_ANIM_FADE_ON,
-                         500,     // animation time
+                         400,     // animation time
                          0,       // delay
                          false);  // no auto delete
     }
@@ -65,6 +67,9 @@ void ui_init(void)
 
     lv_disp_set_theme(dispp, theme);
 
+    // Initialize Cold-Chain telemetry state machine
+    cold_chain_init();
+
     // Initialize all screens
     ui_Screen1_screen_init();   // Loading screen
     ui_Screen2_screen_init();
@@ -79,6 +84,7 @@ void ui_init(void)
     ui_Screen11_screen_init();
     ui_Screen12_screen_init();
     ui_Screen13_screen_init();
+    ui_Screen14_screen_init();
 
     ui____initial_actions0 = lv_obj_create(NULL);
 
@@ -89,8 +95,8 @@ void ui_init(void)
     loading_value = 0;
     lv_bar_set_value(ui_barloading, 0, LV_ANIM_OFF);
 
-    // Start timer (120ms interval)
-    loading_timer = lv_timer_create(loading_timer_cb, 120, NULL);
+    // Start timer (60ms interval for smooth boot)
+    loading_timer = lv_timer_create(loading_timer_cb, 60, NULL);
 }
 
 void ui_destroy(void)
@@ -108,4 +114,5 @@ void ui_destroy(void)
     ui_Screen11_screen_destroy();
     ui_Screen12_screen_destroy();
     ui_Screen13_screen_destroy();
+    ui_Screen14_screen_destroy();
 }

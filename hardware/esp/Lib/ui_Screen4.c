@@ -4,114 +4,203 @@
 // Project name: methxai
 
 #include "ui.h"
+#include "cold_chain_controller.h"
 
-lv_obj_t *ui_Screen4 = NULL;lv_obj_t *ui_Button3 = NULL;lv_obj_t *ui_Label6 = NULL;lv_obj_t *ui_Button4 = NULL;lv_obj_t *ui_Label7 = NULL;lv_obj_t *ui_Panel2 = NULL;lv_obj_t *ui_Label8 = NULL;lv_obj_t *ui_Panel4 = NULL;lv_obj_t *ui_Image8 = NULL;
-// event funtions
+lv_obj_t *ui_Screen4 = NULL;
+lv_obj_t *ui_Panel4 = NULL;
+lv_obj_t *ui_Image8 = NULL;
+lv_obj_t *ui_Label8 = NULL;
 
-// build funtions
+lv_obj_t *ui_Panel2 = NULL;
+lv_obj_t *ui_Label_batch_name = NULL;
+lv_obj_t *ui_Label_batch_meta = NULL;
+lv_obj_t *ui_Label_batch_cold = NULL;
+lv_obj_t *ui_Label_batch_result = NULL;
+lv_obj_t *ui_Label_batch_note = NULL;
+
+lv_obj_t *ui_Button3 = NULL;
+lv_obj_t *ui_Label6 = NULL;
+lv_obj_t *ui_Button4 = NULL;
+lv_obj_t *ui_Label7 = NULL;
+
+static void ui_event_Panel4_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen2_screen_init);
+    }
+}
+
+static void ui_event_Button3_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        // Authorize & proceed to dispense
+        cold_chain_set_batch_status(BATCH_STATUS_RELEASED, "Operator confirmed release authorization.");
+        _ui_screen_change(&ui_Screen3, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_Screen3_screen_init);
+    }
+}
+
+static void ui_event_Button4_cb(lv_event_t * e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        // Place batch on hold
+        cold_chain_set_batch_status(BATCH_STATUS_HOLD, "Placed on HOLD by operator QA audit.");
+        if (ui_Label_batch_result) {
+            lv_label_set_text(ui_Label_batch_result, "DECISION: [BATCH ON HOLD - DISPENSER LOCKED]");
+            lv_obj_set_style_text_color(ui_Label_batch_result, lv_color_hex(0xEF4444), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+    }
+}
 
 void ui_Screen4_screen_init(void)
 {
-ui_Screen4 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen4, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Screen4, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Screen4, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Screen4 = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_Screen4, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Screen4, lv_color_hex(0x0A1120), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Screen4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button3 = lv_btn_create(ui_Screen4);
-lv_obj_set_width( ui_Button3, 183);
-lv_obj_set_height( ui_Button3, 119);
-lv_obj_set_x( ui_Button3, -123 );
-lv_obj_set_y( ui_Button3, 57 );
-lv_obj_set_align( ui_Button3, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button3, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button3, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    // ================= HEADER =================
+    lv_obj_t *head_bar = lv_obj_create(ui_Screen4);
+    lv_obj_set_width(head_bar, 472);
+    lv_obj_set_height(head_bar, 34);
+    lv_obj_set_x(head_bar, 0);
+    lv_obj_set_y(head_bar, -139);
+    lv_obj_set_align(head_bar, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(head_bar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(head_bar, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(head_bar, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(head_bar, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(head_bar, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(head_bar, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label6 = lv_label_create(ui_Button3);
-lv_obj_set_width( ui_Label6, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label6, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label6, 2 );
-lv_obj_set_y( ui_Label6, 2 );
-lv_obj_set_align( ui_Label6, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label6,"English");
-lv_obj_set_style_text_font(ui_Label6, &lv_font_montserrat_30, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // Back button
+    ui_Panel4 = lv_obj_create(head_bar);
+    lv_obj_set_width(ui_Panel4, 42);
+    lv_obj_set_height(ui_Panel4, 28);
+    lv_obj_set_align(ui_Panel4, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Panel4, 2);
+    lv_obj_clear_flag(ui_Panel4, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel4, lv_color_hex(0x1E293B), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel4, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Button4 = lv_btn_create(ui_Screen4);
-lv_obj_set_width( ui_Button4, 183);
-lv_obj_set_height( ui_Button4, 119);
-lv_obj_set_x( ui_Button4, 126 );
-lv_obj_set_y( ui_Button4, 56 );
-lv_obj_set_align( ui_Button4, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button4, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button4, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Button4, lv_color_hex(0xF54900), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Button4, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Image8 = lv_img_create(ui_Panel4);
+    lv_img_set_src(ui_Image8, &ui_img_1046361127);
+    lv_obj_set_align(ui_Image8, LV_ALIGN_CENTER);
 
-ui_Label7 = lv_label_create(ui_Button4);
-lv_obj_set_width( ui_Label7, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label7, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label7, -1 );
-lv_obj_set_y( ui_Label7, 2 );
-lv_obj_set_align( ui_Label7, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label7,"Hindi");
-lv_obj_set_style_text_font(ui_Label7, &lv_font_montserrat_30, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Label8 = lv_label_create(head_bar);
+    lv_obj_set_align(ui_Label8, LV_ALIGN_LEFT_MID);
+    lv_obj_set_x(ui_Label8, 52);
+    lv_label_set_text(ui_Label8, "Vaccine & Medicine Batch Verification");
+    lv_obj_set_style_text_color(ui_Label8, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label8, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel2 = lv_obj_create(ui_Screen4);
-lv_obj_set_width( ui_Panel2, 450);
-lv_obj_set_height( ui_Panel2, 86);
-lv_obj_set_x( ui_Panel2, -3 );
-lv_obj_set_y( ui_Panel2, -63 );
-lv_obj_set_align( ui_Panel2, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel2, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel2, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel2, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel2, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel2, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    lv_obj_t *badge = lv_label_create(head_bar);
+    lv_obj_set_align(badge, LV_ALIGN_RIGHT_MID);
+    lv_obj_set_x(badge, -8);
+    lv_label_set_text(badge, "WHO PREQUALIFIED");
+    lv_obj_set_style_text_color(badge, lv_color_hex(0x00D2B4), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(badge, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Label8 = lv_label_create(ui_Panel2);
-lv_obj_set_width( ui_Label8, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label8, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label8, 0 );
-lv_obj_set_y( ui_Label8, -16 );
-lv_obj_set_align( ui_Label8, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label8,"Choose Language");
-lv_obj_set_style_text_font(ui_Label8, &lv_font_montserrat_36, LV_PART_MAIN| LV_STATE_DEFAULT);
+    // ================= MAIN BATCH AUDIT CARD =================
+    ui_Panel2 = lv_obj_create(ui_Screen4);
+    lv_obj_set_width(ui_Panel2, 472);
+    lv_obj_set_height(ui_Panel2, 185);
+    lv_obj_set_x(ui_Panel2, 0);
+    lv_obj_set_y(ui_Panel2, -18);
+    lv_obj_set_align(ui_Panel2, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(ui_Panel2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_Panel2, lv_color_hex(0x131E30), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Panel2, lv_color_hex(0x22324A), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Panel2, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Panel2, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(ui_Panel2, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Panel4 = lv_obj_create(ui_Screen4);
-lv_obj_set_width( ui_Panel4, 490);
-lv_obj_set_height( ui_Panel4, 33);
-lv_obj_set_x( ui_Panel4, 0 );
-lv_obj_set_y( ui_Panel4, -144 );
-lv_obj_set_align( ui_Panel4, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_Panel4, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Panel4, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Panel4, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_Panel4, lv_color_hex(0x0F172B), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_Panel4, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+    ui_Label_batch_name = lv_label_create(ui_Panel2);
+    lv_obj_set_align(ui_Label_batch_name, LV_ALIGN_TOP_LEFT);
+    lv_label_set_text(ui_Label_batch_name, "PRODUCT: Covaxin Inactivated Vaccine (0.5 mL)");
+    lv_obj_set_style_text_color(ui_Label_batch_name, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_batch_name, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Image8 = lv_img_create(ui_Panel4);
-lv_img_set_src(ui_Image8, &ui_img_1046361127);
-lv_obj_set_width( ui_Image8, LV_SIZE_CONTENT);  /// 24
-lv_obj_set_height( ui_Image8, LV_SIZE_CONTENT);   /// 24
-lv_obj_set_x( ui_Image8, -9 );
-lv_obj_set_y( ui_Image8, -16 );
-lv_obj_add_flag( ui_Image8, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_Image8, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    ui_Label_batch_meta = lv_label_create(ui_Panel2);
+    lv_obj_set_align(ui_Label_batch_meta, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_batch_meta, 24);
+    lv_label_set_text(ui_Label_batch_meta, "Batch: B-7749  |  Exp: 2027-08-31  |  Mfr: Bharat Biotech");
+    lv_obj_set_style_text_color(ui_Label_batch_meta, lv_color_hex(0x94A3B8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_batch_meta, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Label_batch_cold = lv_label_create(ui_Panel2);
+    lv_obj_set_align(ui_Label_batch_cold, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_batch_cold, 46);
+    lv_label_set_text(ui_Label_batch_cold, "Cold Chain: 2.0-8.0 C Maintained Across Transit | 0 Excursions");
+    lv_obj_set_style_text_color(ui_Label_batch_cold, lv_color_hex(0x00D2B4), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_batch_cold, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_batch_result = lv_label_create(ui_Panel2);
+    lv_obj_set_align(ui_Label_batch_result, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_batch_result, 74);
+    lv_label_set_text(ui_Label_batch_result, "DECISION: [RELEASE APPROVED - SAFE FOR DISPENSING]");
+    lv_obj_set_style_text_color(ui_Label_batch_result, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_batch_result, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label_batch_note = lv_label_create(ui_Panel2);
+    lv_obj_set_align(ui_Label_batch_note, LV_ALIGN_TOP_LEFT);
+    lv_obj_set_y(ui_Label_batch_note, 102);
+    lv_label_set_text(ui_Label_batch_note,
+        "Safety Rule: Sensor telemetry validated by SHA256 integrity hash.\n"
+        "Mean Kinetic Temperature (MKT): 3.8 C. No unvalidated assumptions.");
+    lv_obj_set_style_text_color(ui_Label_batch_note, lv_color_hex(0x94A3B8), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label_batch_note, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // ================= ACTIONS =================
+    ui_Button3 = lv_btn_create(ui_Screen4);
+    lv_obj_set_width(ui_Button3, 228);
+    lv_obj_set_height(ui_Button3, 54);
+    lv_obj_set_x(ui_Button3, -118);
+    lv_obj_set_y(ui_Button3, 115);
+    lv_obj_set_align(ui_Button3, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button3, lv_color_hex(0x00A63E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button3, lv_color_hex(0x05DF72), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button3, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label6 = lv_label_create(ui_Button3);
+    lv_obj_set_align(ui_Label6, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label6, "AUTHORIZE & DISPENSE");
+    lv_obj_set_style_text_font(ui_Label6, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Button4 = lv_btn_create(ui_Screen4);
+    lv_obj_set_width(ui_Button4, 228);
+    lv_obj_set_height(ui_Button4, 54);
+    lv_obj_set_x(ui_Button4, 118);
+    lv_obj_set_y(ui_Button4, 115);
+    lv_obj_set_align(ui_Button4, LV_ALIGN_CENTER);
+    lv_obj_set_style_bg_color(ui_Button4, lv_color_hex(0xDC2626), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_Button4, lv_color_hex(0xEF4444), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_Button4, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_Button4, 6, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Label7 = lv_label_create(ui_Button4);
+    lv_obj_set_align(ui_Label7, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label7, "PLACE BATCH ON HOLD");
+    lv_obj_set_style_text_font(ui_Label7, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_Panel4, ui_event_Panel4_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_Button3, ui_event_Button3_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_Button4, ui_event_Button4_cb, LV_EVENT_CLICKED, NULL);
 }
 
 void ui_Screen4_screen_destroy(void)
 {
-   if (ui_Screen4) lv_obj_del(ui_Screen4);
-
-// NULL screen variables
-ui_Screen4= NULL;
-ui_Button3= NULL;
-ui_Label6= NULL;
-ui_Button4= NULL;
-ui_Label7= NULL;
-ui_Panel2= NULL;
-ui_Label8= NULL;
-ui_Panel4= NULL;
-ui_Image8= NULL;
-
+    if (ui_Screen4) lv_obj_del(ui_Screen4);
+    ui_Screen4 = NULL;
+    ui_Panel4 = NULL;
+    ui_Image8 = NULL;
+    ui_Label8 = NULL;
+    ui_Panel2 = NULL;
+    ui_Label_batch_name = NULL;
+    ui_Label_batch_meta = NULL;
+    ui_Label_batch_cold = NULL;
+    ui_Label_batch_result = NULL;
+    ui_Label_batch_note = NULL;
+    ui_Button3 = NULL;
+    ui_Label6 = NULL;
+    ui_Button4 = NULL;
+    ui_Label7 = NULL;
 }

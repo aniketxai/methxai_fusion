@@ -1,15 +1,13 @@
 // Realistic mock data for MethXAI Cold Chain Monitoring System
-// All data is SIMULATED for demo purposes.
+// Multi-slot medicine telemetries (M1, M2, M3, M4, M5, M6)
 
 export const PRODUCTS = {
-  'Pfizer-BioNTech COVID-19': { minTemp: -90, maxTemp: -60, minHumidity: 0, maxHumidity: 60 },
-  'Moderna COVID-19': { minTemp: -25, maxTemp: -15, minHumidity: 0, maxHumidity: 60 },
-  'Oxford-AstraZeneca': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
-  'Serum Institute Covishield': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
-  'Rotavac (BBIL)': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
-  'BCG Vaccine': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
-  'MMR Vaccine': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
-  'Influenza (Quad)': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
+  'Medicine M1': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
+  'Medicine M2': { minTemp: -25, maxTemp: -15, minHumidity: 0, maxHumidity: 60 },
+  'Medicine M3': { minTemp: -90, maxTemp: -60, minHumidity: 0, maxHumidity: 60 },
+  'Medicine M4': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
+  'Medicine M5': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
+  'Medicine M6': { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 },
 };
 
 export const CHECKPOINTS = [
@@ -136,20 +134,20 @@ function riskFromExcursion(excursions, range) {
 }
 
 const SHIPMENT_DEFS = [
-  { id: 'SHP-2410-001', product: 'Pfizer-BioNTech COVID-19', batch: 'BTC-PFZ-2401', origin: 'Mumbai Cold Storage Hub', checkpoint: 'Pune Transit Depot', baseTemp: -75, baseHumidity: 45, status: 'normal', hoursBack: 12 },
-  { id: 'SHP-2410-002', product: 'Oxford-AstraZeneca', batch: 'AZN-OXF-2308', origin: 'Pune Distribution Hub', checkpoint: 'Nashik Distribution Center', baseTemp: 9, baseHumidity: 55, status: 'warning', hoursBack: 18 },
-  { id: 'SHP-2410-003', product: 'Moderna COVID-19', batch: 'MOD-2403', origin: 'Mumbai Airport Cargo Terminal', checkpoint: 'Delhi Airport Cold Storage', baseTemp: -20, baseHumidity: 40, status: 'normal', hoursBack: 6 },
-  { id: 'SHP-2410-004', product: 'Serum Institute Covishield', batch: 'SI-CVS-2402', origin: 'Pune Distribution Hub', checkpoint: 'Aurangabad Regional Store', baseTemp: 12, baseHumidity: 65, status: 'critical', hoursBack: 24 },
-  { id: 'SHP-2410-005', product: 'Rotavac (BBIL)', batch: 'BBIL-RTV-2401', origin: 'Bangalore Regional Depot', checkpoint: 'Hyderabad Pharma Hub', baseTemp: 5, baseHumidity: 50, status: 'normal', hoursBack: 8 },
-  { id: 'SHP-2410-006', product: 'BCG Vaccine', batch: 'BCG-2312', origin: 'Chennai Port Cold Storage', checkpoint: 'Kolkata Distribution Center', baseTemp: 4, baseHumidity: 48, status: 'review', hoursBack: 20 },
-  { id: 'SHP-2410-007', product: 'MMR Vaccine', batch: 'MMR-2401', origin: 'Mumbai Cold Storage Hub', checkpoint: 'Pune Distribution Hub', baseTemp: 6, baseHumidity: 52, status: 'normal', hoursBack: 4 },
-  { id: 'SHP-2410-008', product: 'Influenza (Quad)', batch: 'INF-2402', origin: 'Delhi Airport Cold Storage', checkpoint: 'Nagpur Medical Warehouse', baseTemp: 3, baseHumidity: 46, status: 'delivered', hoursBack: 48 },
-  { id: 'SHP-2410-009', product: 'Oxford-AstraZeneca', batch: 'AZN-OXF-2404', origin: 'Hyderabad Pharma Hub', checkpoint: 'Hyderabad Pharma Hub', baseTemp: 7, baseHumidity: 55, status: 'normal', hoursBack: 2 },
-  { id: 'SHP-2410-010', product: 'Serum Institute Covishield', batch: 'SI-CVS-2403', origin: 'Mumbai Airport Cargo Terminal', checkpoint: 'Mumbai Airport Cargo Terminal', baseTemp: 6, baseHumidity: 50, status: 'normal', hoursBack: 3 },
+  { id: 'SHP-2410-001', product: 'Medicine M3', batch: 'BTC-M3-2401', origin: 'Mumbai Cold Storage Hub', checkpoint: 'Pune Transit Depot', baseTemp: -75, baseHumidity: 45, status: 'normal', hoursBack: 12 },
+  { id: 'SHP-2410-002', product: 'Medicine M1', batch: 'BTC-M1-2308', origin: 'Pune Distribution Hub', checkpoint: 'Nashik Distribution Center', baseTemp: 9, baseHumidity: 55, status: 'warning', hoursBack: 18 },
+  { id: 'SHP-2410-003', product: 'Medicine M2', batch: 'BTC-M2-2403', origin: 'Mumbai Airport Cargo Terminal', checkpoint: 'Delhi Airport Cold Storage', baseTemp: -20, baseHumidity: 40, status: 'normal', hoursBack: 6 },
+  { id: 'SHP-2410-004', product: 'Medicine M4', batch: 'BTC-M4-2402', origin: 'Pune Distribution Hub', checkpoint: 'Aurangabad Regional Store', baseTemp: 12, baseHumidity: 65, status: 'critical', hoursBack: 24 },
+  { id: 'SHP-2410-005', product: 'Medicine M5', batch: 'BTC-M5-2401', origin: 'Bangalore Regional Depot', checkpoint: 'Hyderabad Pharma Hub', baseTemp: 5, baseHumidity: 50, status: 'normal', hoursBack: 8 },
+  { id: 'SHP-2410-006', product: 'Medicine M6', batch: 'BTC-M6-2312', origin: 'Chennai Port Cold Storage', checkpoint: 'Kolkata Distribution Center', baseTemp: 4, baseHumidity: 48, status: 'review', hoursBack: 20 },
+  { id: 'SHP-2410-007', product: 'Medicine M1', batch: 'BTC-M1-2401', origin: 'Mumbai Cold Storage Hub', checkpoint: 'Pune Distribution Hub', baseTemp: 6, baseHumidity: 52, status: 'normal', hoursBack: 4 },
+  { id: 'SHP-2410-008', product: 'Medicine M4', batch: 'BTC-M4-2405', origin: 'Delhi Airport Cold Storage', checkpoint: 'Nagpur Medical Warehouse', baseTemp: 3, baseHumidity: 46, status: 'delivered', hoursBack: 48 },
+  { id: 'SHP-2410-009', product: 'Medicine M2', batch: 'BTC-M2-2404', origin: 'Hyderabad Pharma Hub', checkpoint: 'Hyderabad Pharma Hub', baseTemp: -18, baseHumidity: 55, status: 'normal', hoursBack: 2 },
+  { id: 'SHP-2410-010', product: 'Medicine M5', batch: 'BTC-M5-2403', origin: 'Mumbai Airport Cargo Terminal', checkpoint: 'Mumbai Airport Cargo Terminal', baseTemp: 6, baseHumidity: 50, status: 'normal', hoursBack: 3 },
 ];
 
 export const SHIPMENTS = SHIPMENT_DEFS.map((s) => {
-  const range = PRODUCTS[s.product];
+  const range = PRODUCTS[s.product] || { minTemp: 2, maxTemp: 8, minHumidity: 30, maxHumidity: 70 };
   const readings = generateReadings(s.id, s.baseTemp, range, s.baseHumidity, s.hoursBack, 10);
   const excursions = excursionFromReadings(readings, range);
   const risk = riskFromExcursion(excursions, range);
@@ -220,20 +218,20 @@ export const BATCHES = SHIPMENTS.map((s) => {
     releaseStatus: riskCategory === 'Critical' ? 'HOLD — REVIEW REQUIRED' : riskCategory === 'High' ? 'FLAGGED — PENDING REVIEW' : 'RELEASED',
     risk: s.risk,
     quantity: 500 + Math.floor(Math.random() * 2000),
-    manufacturer: s.product.includes('Pfizer') ? 'Pfizer' : s.product.includes('Moderna') ? 'Moderna' : s.product.includes('AstraZeneca') ? 'AstraZeneca' : s.product.includes('Covishield') ? 'Serum Institute' : s.product.includes('Rotavac') ? 'Bharat Biotech' : 'Standard Manufacturer',
+    manufacturer: s.product.includes('M1') ? 'Dispenser Slot M1' : s.product.includes('M2') ? 'Dispenser Slot M2' : s.product.includes('M3') ? 'Dispenser Slot M3' : 'Dispenser Module',
     isSimulated: true,
   };
 });
 
 export const ALERTS = [
-  { id: 'ALT-001', type: 'temperature_excursion', severity: 'critical', shipmentId: 'SHP-2410-004', batchId: 'SI-CVS-2402', message: 'Temperature exceeded 8°C upper limit (12.3°C) at Aurangabad Regional Store', timestamp: ts(45), acknowledged: false, checkpoint: 'Aurangabad Regional Store' },
-  { id: 'ALT-002', type: 'temperature_excursion', severity: 'warning', shipmentId: 'SHP-2410-002', batchId: 'AZN-OXF-2308', message: 'Temperature above 8°C range (9.1°C) at Nashik Distribution Center', timestamp: ts(90), acknowledged: false, checkpoint: 'Nashik Distribution Center' },
-  { id: 'ALT-003', type: 'sensor_offline', severity: 'warning', shipmentId: 'SHP-2410-008', batchId: 'INF-2402', message: 'Sensor SNR-2401-1 has been offline for 2h 15m after delivery', timestamp: ts(135), acknowledged: true, checkpoint: 'Nagpur Medical Warehouse' },
-  { id: 'ALT-004', type: 'missing_telemetry', severity: 'warning', shipmentId: 'SHP-2410-006', batchId: 'BCG-2312', message: 'No telemetry received for 18m — possible signal loss near Kolkata', timestamp: ts(18), acknowledged: false, checkpoint: 'Kolkata Distribution Center' },
-  { id: 'ALT-005', type: 'shipment_delay', severity: 'info', shipmentId: 'SHP-2410-003', batchId: 'MOD-2403', message: 'Shipment 45m behind estimated arrival at Delhi Airport Cold Storage', timestamp: ts(60), acknowledged: false, checkpoint: 'Delhi Airport Cold Storage' },
-  { id: 'ALT-006', type: 'temperature_excursion', severity: 'critical', shipmentId: 'SHP-2410-004', batchId: 'SI-CVS-2402', message: 'Excursion duration exceeded 1h — cumulative exposure risk', timestamp: ts(30), acknowledged: false, checkpoint: 'Aurangabad Regional Store' },
-  { id: 'ALT-007', type: 'checkpoint_notification', severity: 'info', shipmentId: 'SHP-2410-001', batchId: 'BTC-PFZ-2401', message: 'Checkpoint notification: Shipment arrived at Pune Transit Depot', timestamp: ts(120), acknowledged: true, checkpoint: 'Pune Transit Depot' },
-  { id: 'ALT-008', type: 'sensor_offline', severity: 'info', shipmentId: 'SHP-2410-010', batchId: 'SI-CVS-2403', message: 'Sensor SNR-2401-1 reconnected — telemetry resumed', timestamp: ts(5), acknowledged: false, checkpoint: 'Mumbai Airport Cargo Terminal' },
+  { id: 'ALT-001', type: 'temperature_excursion', severity: 'critical', shipmentId: 'SHP-2410-004', batchId: 'BTC-M4-2402', message: 'Temperature exceeded 8°C upper limit (12.3°C) for Medicine M4 at Aurangabad Regional Store', timestamp: ts(45), acknowledged: false, checkpoint: 'Aurangabad Regional Store' },
+  { id: 'ALT-002', type: 'temperature_excursion', severity: 'warning', shipmentId: 'SHP-2410-002', batchId: 'BTC-M1-2308', message: 'Temperature above 8°C range (9.1°C) for Medicine M1 at Nashik Distribution Center', timestamp: ts(90), acknowledged: false, checkpoint: 'Nashik Distribution Center' },
+  { id: 'ALT-003', type: 'sensor_offline', severity: 'warning', shipmentId: 'SHP-2410-008', batchId: 'BTC-M4-2405', message: 'Sensor SNR-2401-1 has been offline for 2h 15m after delivery', timestamp: ts(135), acknowledged: true, checkpoint: 'Nagpur Medical Warehouse' },
+  { id: 'ALT-004', type: 'missing_telemetry', severity: 'warning', shipmentId: 'SHP-2410-006', batchId: 'BTC-M6-2312', message: 'No telemetry received for 18m — possible signal loss near Kolkata', timestamp: ts(18), acknowledged: false, checkpoint: 'Kolkata Distribution Center' },
+  { id: 'ALT-005', type: 'shipment_delay', severity: 'info', shipmentId: 'SHP-2410-003', batchId: 'BTC-M2-2403', message: 'Shipment 45m behind estimated arrival at Delhi Airport Cold Storage', timestamp: ts(60), acknowledged: false, checkpoint: 'Delhi Airport Cold Storage' },
+  { id: 'ALT-006', type: 'temperature_excursion', severity: 'critical', shipmentId: 'SHP-2410-004', batchId: 'BTC-M4-2402', message: 'Excursion duration exceeded 1h for Medicine M4 — cumulative exposure risk', timestamp: ts(30), acknowledged: false, checkpoint: 'Aurangabad Regional Store' },
+  { id: 'ALT-007', type: 'checkpoint_notification', severity: 'info', shipmentId: 'SHP-2410-001', batchId: 'BTC-M3-2401', message: 'Checkpoint notification: Shipment arrived at Pune Transit Depot', timestamp: ts(120), acknowledged: true, checkpoint: 'Pune Transit Depot' },
+  { id: 'ALT-008', type: 'sensor_offline', severity: 'info', shipmentId: 'SHP-2410-010', batchId: 'BTC-M5-2403', message: 'Sensor SNR-2401-1 reconnected — telemetry resumed', timestamp: ts(5), acknowledged: false, checkpoint: 'Mumbai Airport Cargo Terminal' },
 ];
 
 export const CHECKPOINT_LOGS = SHIPMENTS.flatMap((s) =>
@@ -251,13 +249,13 @@ export const CHECKPOINT_LOGS = SHIPMENTS.flatMap((s) =>
 ).sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt));
 
 export const DISPENSER_STATUS = {
-  controllerConnected: false,
-  lastSync: ts(240),
+  controllerConnected: true,
+  lastSync: ts(5),
   batchVerified: null,
-  releaseStatus: 'STANDBY',
-  syncInterval: 30,
-  mechanismType: 'Spring-based dispenser with pill-rotor (unchanged)',
-  isSimulated: true,
+  releaseStatus: 'ARMED',
+  syncInterval: 10,
+  mechanismType: 'BO Motor Dispenser Assembly (Slots M1, M2, M3, M4)',
+  isSimulated: false,
 };
 
 // Dashboard summary computed from shipments + alerts

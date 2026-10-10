@@ -14,17 +14,20 @@ extern "C" {
 extern void ui_Screen6_screen_init(void);
 extern void ui_Screen6_screen_destroy(void);
 extern lv_obj_t *ui_Screen6;
+
 extern lv_obj_t *ui_Panel8;
-extern lv_obj_t *ui_Label13;
-extern lv_obj_t *ui_Label14;
+extern lv_obj_t *ui_Label13;           // Main dispensing headline
+extern lv_obj_t *ui_Label14;           // Subtitle / IR detail
 extern lv_obj_t *ui_Panel9;
 extern lv_obj_t *ui_Image4;
-extern lv_obj_t *ui_Spinner1;
-// CUSTOM VARIABLES
+extern lv_obj_t *ui_Spinner1;          // Active spinner
+
+extern lv_obj_t *ui_Label_ir_status;   // IR chute sensor readout
+extern lv_obj_t *ui_Label_batch_stat;  // Batch verified badge
+extern lv_obj_t *ui_Btn_dispense_home; // Return to Home button
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
-
