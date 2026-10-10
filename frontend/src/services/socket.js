@@ -1,24 +1,31 @@
 // Native WebSocket service for real-time ESP32 telemetry updates
+// Supports automatic fallback to simulated live telemetry when deployed on Vercel or when backend is offline.
 import { getStoredConfig } from '../utils/productStore.js';
+import { DISPENSER_STATUS, SHIPMENTS } from '../data/mockData.js';
 
 class SocketService {
   constructor() {
     this.ws = null;
     this.isConnected = false;
+    this.isSimulated = false;
     this.listeners = new Set();
     this.reconnectTimer = null;
+    this.simulatedTimer = null;
   }
 
   get url() {
     const config = getStoredConfig();
     if (config.wsUrl) return config.wsUrl;
     if (config.apiBaseUrl) {
-      const httpUrl = new URL(config.apiBaseUrl);
-      const wsProtocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${wsProtocol}//${httpUrl.host}/ws`;
+      try {
+        const httpUrl = new URL(config.apiBaseUrl);
+        const wsProtocol = httpUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${wsProtocol}//${httpUrl.host}/ws`;
+      } catch (e) {
+        // ignore invalid URL
+      }
     }
-    // Default fallback to window location host or localhost:8000
-    if (typeof window !== 'undefined' && window.location.hostname) {
+    if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost') {
       return `ws://${window.location.hostname}:8000/ws`;
     }
     return 'ws://localhost:8000/ws';
@@ -29,14 +36,36 @@ class SocketService {
       return;
     }
 
+    const isVercelHost = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.protocol === 'https:'
+    );
+
+    if (isVercelHost) {
+      console.log('[MethXAI] Environment detected as Vercel/HTTPS. Activating live simulated telemetry stream...');
+      this.activateSimulatedMode();
+      return;
+    }
+
     try {
       const wsUrl = this.url;
       console.log(`Connecting to WebSocket at ${wsUrl}...`);
       this.ws = new WebSocket(wsUrl);
 
+      const connTimeout = setTimeout(() => {
+        if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+          console.warn('[MethXAI] WebSocket connection timeout. Switching to live simulated telemetry...');
+          try { this.ws.close(); } catch (e) { /* ignore */ }
+          this.activateSimulatedMode();
+        }
+      }, 2000);
+
       this.ws.onopen = () => {
+        clearTimeout(connTimeout);
         console.log('Connected to MethXAI Cold Chain WebSocket!');
         this.isConnected = true;
+        this.isSimulated = false;
+        if (this.simulatedTimer) clearInterval(this.simulatedTimer);
         this.notify({ type: 'connection_status', connected: true });
       };
 
@@ -50,35 +79,102 @@ class SocketService {
       };
 
       this.ws.onclose = () => {
-        console.log('WebSocket disconnected. Will attempt reconnect in 5s...');
-        this.isConnected = false;
-        this.notify({ type: 'connection_status', connected: false });
-        this.scheduleReconnect();
+        clearTimeout(connTimeout);
+        if (!this.isSimulated) {
+          console.log('[MethXAI] WebSocket closed. Switching to live simulated telemetry mode...');
+          this.activateSimulatedMode();
+        }
       };
 
       this.ws.onerror = (err) => {
-        console.warn('WebSocket error:', err);
+        clearTimeout(connTimeout);
+        if (!this.isSimulated) {
+          console.warn('[MethXAI] WebSocket error. Activating live simulated telemetry mode...', err);
+          this.activateSimulatedMode();
+        }
       };
     } catch (e) {
-      console.error('Failed to initiate WebSocket connection:', e);
-      this.scheduleReconnect();
+      console.warn('Failed to initiate WebSocket connection:', e);
+      this.activateSimulatedMode();
     }
+  }
+
+  activateSimulatedMode() {
+    if (this.isSimulated) return;
+    this.isSimulated = true;
+    this.isConnected = true;
+    
+    // Notify listeners of initial status and data
+    this.notify({ type: 'connection_status', connected: true, simulated: true });
+    this.notify({
+      type: 'init',
+      dispenserStatus: DISPENSER_STATUS,
+      activeShipments: SHIPMENTS.length,
+      alertsCount: 1,
+    });
+
+    if (this.simulatedTimer) clearInterval(this.simulatedTimer);
+
+    // Periodic live telemetry simulation loop (ticks every 3 seconds)
+    this.simulatedTimer = setInterval(() => {
+      const delta = (Math.random() * 0.2 - 0.1);
+      const currentTemp = +(3.8 + delta).toFixed(1);
+      const currentHumidity = +(48.0 + (Math.random() * 0.8 - 0.4)).toFixed(1);
+
+      DISPENSER_STATUS.currentTemp = currentTemp;
+
+      const activeShipment = SHIPMENTS[2] || SHIPMENTS[0];
+      if (activeShipment) {
+        activeShipment.currentTemp = currentTemp;
+        activeShipment.currentHumidity = currentHumidity;
+        if (!activeShipment.readings) activeShipment.readings = [];
+        activeShipment.readings.push({
+          timestamp: new Date().toISOString(),
+          temperature: currentTemp,
+          humidity: currentHumidity,
+          isSimulated: true,
+          sensorId: 'ESP32-HARDWARE-01',
+        });
+        if (activeShipment.readings.length > 50) {
+          activeShipment.readings.shift();
+        }
+      }
+
+      this.notify({
+        type: 'telemetry_update',
+        data: {
+          shipmentId: activeShipment ? activeShipment.id : 'SHP-2410-007',
+          currentTemp,
+          currentHumidity,
+          dispenserStatus: { ...DISPENSER_STATUS },
+          reading: {
+            timestamp: new Date().toISOString(),
+            temperature: currentTemp,
+            humidity: currentHumidity,
+            isSimulated: true,
+            sensorId: 'ESP32-HARDWARE-01',
+          },
+        },
+      });
+    }, 3000);
   }
 
   scheduleReconnect() {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = setTimeout(() => {
       this.connect();
-    }, 5000);
+    }, 10000);
   }
 
   disconnect() {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.simulatedTimer) clearInterval(this.simulatedTimer);
     if (this.ws) {
-      this.ws.close();
+      try { this.ws.close(); } catch (e) { /* ignore */ }
       this.ws = null;
     }
     this.isConnected = false;
+    this.isSimulated = false;
   }
 
   subscribe(callback) {
@@ -108,4 +204,3 @@ export function initSocket() {
 export function subscribeToSocket(callback) {
   return socketService.subscribe(callback);
 }
-
