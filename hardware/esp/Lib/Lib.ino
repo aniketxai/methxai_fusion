@@ -1054,11 +1054,10 @@ void loop() {
     Serial.println("Label41 updated with audit summary");
   }
 
-  // 4. Start audio in background
+  // 4. Audio output is processed directly by Mac Speaker via Backend Server
   if (triageReady && labelUpdated && !audioStarted) {
-    playAudioAsync(FIXED_AUDIO_URL);
     audioStarted = true;
-    Serial.println("Audio launched: " FIXED_AUDIO_URL);
+    Serial.println("Audio feedback & TTS speech playing via Mac Speakers.");
   }
 
   // 5. Arm 1-minute Screen12 hold timer once audio starts

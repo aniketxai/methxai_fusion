@@ -1,9 +1,14 @@
 import os
+import sys
+from pathlib import Path
 import json
 import time
 import asyncio
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
+
+# Ensure backend directory is in sys.path
+sys.path.append(str(Path(__file__).parent))
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -265,6 +270,15 @@ async def handle_esp32_triage(req: ESP32TriageRequest):
             ]
         }
     }
+
+    # Play chime sound + speech output directly through Mac Speaker
+    try:
+        import subprocess
+        if os.path.exists(DEFAULT_AUDIO_PATH):
+            subprocess.Popen(["afplay", DEFAULT_AUDIO_PATH])
+        subprocess.Popen(["say", summary])
+    except Exception as err:
+        print(f"Mac speaker playback note: {err}")
 
     # Broadcast event to frontend dashboard
     await ws_manager.broadcast({
