@@ -7,6 +7,7 @@ MethXAI Fusion is an end-to-end, IoT-enabled cold chain monitoring and automated
 ## Table of Contents
 
 - [Overview](#overview)
+- [Hardware Prototype](#hardware-prototype)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
 - [Repository Structure](#repository-structure)
