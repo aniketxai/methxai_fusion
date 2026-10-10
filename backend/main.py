@@ -229,6 +229,51 @@ ws_manager = ConnectionManager()
 # ESP32 HARDWARE INTEGRATION ENDPOINTS
 # =====================================================================
 
+def query_ollama_triage(temp: float, spo2: float, heart_rate: float, voice_text: str) -> tuple:
+    """
+    Queries local Ollama LLM (llama3.2:1b) for cold-chain & triage assessment.
+    Returns (summary_text, priority_string).
+    """
+    import urllib.request
+    
+    prompt = (
+        f"You are MethXAI AI Assistant for cold-chain vaccine monitoring. "
+        f"Current sensor values: Temperature = {temp} °C (Safe margin: 2.0°C to 8.0°C), SPO2 = {spo2}%, Heart Rate = {heart_rate} bpm. "
+        f"User query: '{voice_text}'. "
+        f"Provide a concise, professional 2-sentence cold chain status assessment and release status."
+    )
+    
+    try:
+        env_copy = os.environ.copy()
+        env_copy['NO_PROXY'] = '127.0.0.1,localhost'
+        req_data = json.dumps({
+            "model": "llama3.2:1b",
+            "prompt": prompt,
+            "stream": False
+        }).encode('utf-8')
+        
+        req = urllib.request.Request(
+            "http://127.0.0.1:11434/api/generate",
+            data=req_data,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            ollama_resp = data.get("response", "").strip()
+            if ollama_resp:
+                priority = "Normal" if 2.0 <= temp <= 8.0 else "High"
+                return ollama_resp, priority
+    except Exception as e:
+        print(f"Ollama call note (using fallback): {e}")
+
+    # Rule engine fallback
+    if 2.0 <= temp <= 8.0:
+        return f"Cold-Chain Verified: Batch B-7749 stored at {temp:.1f} °C. Quality cleared for dispense.", "Normal"
+    else:
+        return f"Cold-Chain WARNING: Temperature {temp:.1f} °C outside target (2.0 - 8.0 °C). Review required.", "High"
+
+
 class ESP32TriageRequest(BaseModel):
     temperature: Optional[float] = 3.8
     spo2: Optional[float] = 98.0
@@ -238,27 +283,25 @@ class ESP32TriageRequest(BaseModel):
 @app.post("/triage")
 async def handle_esp32_triage(req: ESP32TriageRequest):
     """
-    Called directly by ESP32 sketch Lib.ino when cold-chain audit / triage is requested.
+    Called directly by ESP32 or Mac Mic when cold-chain audit / triage is requested.
+    Queries Ollama LLM and speaks summary out loud over Mac Speakers.
     """
-    print(f"ESP32 Triage Request received: Temp={req.temperature}°C, SPO2={req.spo2}%, HR={req.heart_rate} bpm")
+    print(f"ESP32 / Mic Triage Request: Temp={req.temperature}°C, SPO2={req.spo2}%, Voice='{req.voice_text}'")
     
     DISPENSER_STATUS["currentTemp"] = req.temperature
     DISPENSER_STATUS["lastPing"] = datetime.now(timezone.utc).isoformat()
     
-    # Audit logic
-    if 2.0 <= req.temperature <= 8.0:
-        summary = f"Cold-Chain Verified: Batch B-7749 stored at {req.temperature:.1f} °C. Quality cleared for dispense."
-        priority = "Normal"
-        recommendation_name = "COVID-19 Vaccine (Pfizer-BioNTech)"
-        confidence = "0.98"
-    else:
-        summary = f"Cold-Chain WARNING: Temperature {req.temperature:.1f} °C outside target (2.0 - 8.0 °C). Review required."
-        priority = "High"
-        recommendation_name = "COVID-19 Vaccine (Quarantined)"
-        confidence = "0.60"
+    # Query Ollama LLM (llama3.2:1b)
+    summary, priority = query_ollama_triage(
+        req.temperature, req.spo2, req.heart_rate, req.voice_text or "Audit request"
+    )
+    
+    recommendation_name = "COVID-19 Vaccine (Pfizer-BioNTech)" if priority == "Normal" else "COVID-19 Vaccine (Quarantined)"
+    confidence = "0.98" if priority == "Normal" else "0.60"
 
     response_payload = {
         "status": "success",
+        "ollama_model": "llama3.2:1b",
         "report": {
             "patient_summary": summary,
             "triage_priority": priority,
@@ -271,7 +314,7 @@ async def handle_esp32_triage(req: ESP32TriageRequest):
         }
     }
 
-    # Play chime sound + speech output directly through Mac Speaker
+    # Speak Ollama's AI response directly through Mac Speaker
     try:
         import subprocess
         if os.path.exists(DEFAULT_AUDIO_PATH):
@@ -289,11 +332,33 @@ async def handle_esp32_triage(req: ESP32TriageRequest):
             "heart_rate": req.heart_rate,
             "summary": summary,
             "priority": priority,
+            "ollama": True,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     })
 
     return response_payload
+
+
+class VoiceTriageRequest(BaseModel):
+    voice_text: str
+    temperature: Optional[float] = 3.8
+    spo2: Optional[float] = 98.0
+    heart_rate: Optional[float] = 72.0
+
+@app.post("/api/voice-triage")
+async def handle_mac_voice_triage(req: VoiceTriageRequest):
+    """
+    Triggered when user speaks into Mac Microphone via Dashboard or Voice Audit.
+    Evaluates with Ollama LLM and speaks output on Mac Speakers.
+    """
+    triage_req = ESP32TriageRequest(
+        temperature=req.temperature,
+        spo2=req.spo2,
+        heart_rate=req.heart_rate,
+        voice_text=req.voice_text
+    )
+    return await handle_esp32_triage(triage_req)
 
 
 class ESP32TelemetryRequest(BaseModel):

@@ -11,6 +11,7 @@ import {
 import { useShipments, useAlerts, useDashboardSummary } from '../hooks/useApi.js';
 import { LoadingState, ErrorState } from '../components/StateViews.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import MacVoiceAudit from '../components/MacVoiceAudit.jsx';
 import { formatTemp, timeAgo, formatTime } from '../utils/format.js';
 import { ALERTS } from '../data/mockData.js';
 
@@ -86,6 +87,9 @@ export default function Overview() {
           <div className="delta">{summary?.unackAlerts ?? 0} unacknowledged alerts</div>
         </div>
       </div>
+
+      {/* Mac Microphone Voice Audit (Ollama AI) */}
+      <MacVoiceAudit />
 
       {/* Temperature trend + recent alerts */}
       <div className="grid-2">
