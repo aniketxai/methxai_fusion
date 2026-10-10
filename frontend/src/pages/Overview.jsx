@@ -88,24 +88,24 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Mac Microphone Voice Audit (Ollama AI) */}
+      {/* Voice Dispatch & Clinical Quality Console */}
       <MacVoiceAudit />
 
       {/* LVGL & Motor Control Quick Terminal Callout */}
-      <div style={{ background: '#0F172A', border: '1px solid #0EA5E9', borderRadius: '12px', padding: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: '8px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h3 style={{ margin: 0, color: '#F8FAFC', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Cpu size={20} color="#38BDF8" /> LVGL Display Mirror & Website Motor Control Terminal
+          <h3 style={{ margin: 0, color: '#F8FAFC', fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Cpu size={18} color="#38BDF8" /> LVGL TFT Mirror & Dispenser Motor Workbench
           </h3>
-          <p style={{ margin: '4px 0 0 0', color: '#94A3B8', fontSize: '12.5px' }}>
-            Full 14-screen LVGL TFT simulator, bi-directional ESP32 UART motor actuation (M3, M4, Relays, Stepper, Gate), and live sensor diagnostics.
+          <p style={{ margin: '4px 0 0 0', color: '#94A3B8', fontSize: '12px' }}>
+            14-screen LVGL TFT simulator, bi-directional ESP32 UART actuation (M3, M4, Relays, Stepper, Gate), and live telemetry.
           </p>
         </div>
         <button 
           onClick={() => navigate('/lvgl-control')}
-          style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+          style={{ background: '#0284C7', color: '#FFFFFF', border: 'none', padding: '9px 16px', borderRadius: '6px', fontWeight: 600, fontSize: '12.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          Open LVGL Motor Workbench →
+          Open Motor Workbench →
         </button>
       </div>
 

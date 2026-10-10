@@ -250,12 +250,27 @@ export const CHECKPOINT_LOGS = SHIPMENTS.flatMap((s) =>
 
 export const DISPENSER_STATUS = {
   controllerConnected: true,
+  espConnected: true,
   lastSync: ts(5),
   batchVerified: null,
   releaseStatus: 'ARMED',
   syncInterval: 10,
   mechanismType: 'BO Motor Dispenser Assembly (Slots M1, M2, M3, M4)',
   isSimulated: false,
+  activeScreen: 14,
+  gateStatus: 'CLOSED',
+  irBeamStatus: 'CLEAR',
+  currentTemp: 3.8,
+  motorState: 'IDLE',
+  lastCommand: null,
+  slots: [
+    { id: 1, product: 'Medicine M1', motor: 'M3 (Spring 1)', cmd: 'M3 ON', batch: 'BTC-M1-2401', status: 'READY', stock: 14 },
+    { id: 2, product: 'Medicine M2', motor: 'M4 (Spring 2)', cmd: 'M4 ON', batch: 'BTC-M2-2403', status: 'READY', stock: 8 },
+    { id: 3, product: 'Medicine M3', motor: 'R0 (Relay 1)', cmd: 'R0 ON', batch: 'BTC-M3-2401', status: 'READY', stock: 20 },
+    { id: 4, product: 'Medicine M4', motor: 'R1 (Relay 2)', cmd: 'R1 ON', batch: 'BTC-M4-2402', status: 'QUALITY_HOLD', stock: 5 },
+    { id: 5, product: 'Medicine M5', motor: 'STEPPER FWD (+512)', cmd: 'STEP 512', batch: 'BTC-M5-2401', status: 'READY', stock: 30 },
+    { id: 6, product: 'Medicine M6', motor: 'STEPPER REV (-512)', cmd: 'STEP -512', batch: 'BTC-M6-2312', status: 'READY', stock: 12 },
+  ],
 };
 
 // Dashboard summary computed from shipments + alerts

@@ -49,6 +49,26 @@ async def startup_event():
     except Exception as e:
         print(f"Startup speech note: {e}")
 
+def speak_dispense_complete():
+    msg = "Please take your vaccine. Kripya vaccine le le, MethXAI mein aapka swagat hai."
+    print(f"\n============================================================")
+    print(f"📢 DISPENSE COMPLETE VOICE PROMPT: {msg}")
+    print(f"============================================================\n")
+    try:
+        import subprocess
+        subprocess.Popen(["say", msg])
+    except Exception as e:
+        print(f"Dispense audio prompt note: {e}")
+
+@app.post("/api/dispenser/speak-complete")
+async def api_speak_dispense_complete():
+    speak_dispense_complete()
+    await ws_manager.broadcast({
+        "type": "dispense_complete_audio",
+        "message": "Please take your vaccine. Kripya vaccine le le, MethXAI mein aapka swagat hai."
+    })
+    return {"status": "success", "message": "Voice prompt played"}
+
 # =====================================================================
 # IN-MEMORY DATA STORE & REAL-TIME STATE
 # =====================================================================
@@ -77,7 +97,7 @@ DISPENSER_STATUS = {
     "gateStatus": "CLOSED",
     "irBeamStatus": "CLEAR",
     "currentTemp": 3.8,
-    "activeScreen": 14,
+    "activeScreen": 2,
     "motorState": "IDLE",
     "lastCommand": None,
     "pendingCommand": None,
@@ -339,6 +359,12 @@ async def handle_esp32_triage(req: ESP32TriageRequest):
     except Exception as err:
         print(f"Mac speaker playback note: {err}")
 
+    # Queue VOICE_DISPENSE command if cold-chain audit is cleared
+    if priority == "Normal":
+        DISPENSER_STATUS["pendingCommand"] = "VOICE_DISPENSE"
+        DISPENSER_STATUS["motorState"] = "DISPENSING"
+        DISPENSER_STATUS["activeScreen"] = 6
+
     # Broadcast event to frontend dashboard
     await ws_manager.broadcast({
         "type": "esp32_triage_completed",
@@ -396,11 +422,15 @@ async def receive_esp32_telemetry(telemetry: ESP32TelemetryRequest):
     now_iso = datetime.now(timezone.utc).isoformat()
     
     # Update global dispenser status
+    prev_gate = DISPENSER_STATUS.get("gateStatus", "CLOSED")
     DISPENSER_STATUS["espConnected"] = True
     DISPENSER_STATUS["lastPing"] = now_iso
     DISPENSER_STATUS["currentTemp"] = telemetry.temperature
     DISPENSER_STATUS["gateStatus"] = telemetry.gate_status
     DISPENSER_STATUS["irBeamStatus"] = "DETECTED" if telemetry.ir_sensor == 0 else "CLEAR"
+
+    if prev_gate != "OPEN" and telemetry.gate_status == "OPEN":
+        speak_dispense_complete()
     
     # Find matching shipment or default to SHP-2410-007
     shipment = next((s for s in SHIPMENTS if s["id"] == telemetry.shipmentId), SHIPMENTS[2])
@@ -572,12 +602,13 @@ async def control_dispenser_motor(req: MotorControlRequest):
         "R1_ON": "R1 ON", "R1_OFF": "R1 OFF",
         "STEPPER_FWD": "STEP 512", "STEPPER_REV": "STEP -512",
         "DROP_SERVO": "DROP", "GATE_OPEN": "GATE OPEN", "GATE_CLOSE": "GATE CLOSE",
-        "ESTOP": "STOP", "ARM": "START", "POLL_IR": "IR?"
+        "ESTOP": "STOP", "ARM": "START", "POLL_IR": "IR?",
+        "VOICE_DISPENSE": "VOICE_DISPENSE"
     }
     std_cmd = command_map.get(cmd, cmd)
 
     # Cold chain integrity check for dispense actions
-    if any(k in std_cmd for k in ["M3 ON", "M4 ON", "R0 ON", "R1 ON", "STEP 512"]) and not req.overrideLock:
+    if any(k in std_cmd for k in ["M3 ON", "M4 ON", "R0 ON", "R1 ON", "STEP 512", "VOICE_DISPENSE"]) and not req.overrideLock:
         active_batch = next((b for b in BATCHES if b["batchId"] == "BTC-M4-2402"), None)
         if active_batch and active_batch["releaseStatus"] == "HOLD" and req.slotId == 4:
             raise HTTPException(
@@ -594,6 +625,7 @@ async def control_dispenser_motor(req: MotorControlRequest):
     if std_cmd == "GATE OPEN":
         DISPENSER_STATUS["gateStatus"] = "OPEN"
         DISPENSER_STATUS["motorState"] = "IDLE"
+        speak_dispense_complete()
     elif std_cmd == "GATE CLOSE":
         DISPENSER_STATUS["gateStatus"] = "CLOSED"
         DISPENSER_STATUS["motorState"] = "IDLE"
@@ -605,7 +637,7 @@ async def control_dispenser_motor(req: MotorControlRequest):
     elif std_cmd == "AUTO_TEST_ALL":
         DISPENSER_STATUS["motorState"] = "AUTO_TESTING"
         DISPENSER_STATUS["activeScreen"] = 14
-    elif any(k in std_cmd for k in ["ON", "STEP", "DROP"]):
+    elif any(k in std_cmd for k in ["ON", "STEP", "DROP", "VOICE_DISPENSE"]):
         DISPENSER_STATUS["motorState"] = "DISPENSING"
         DISPENSER_STATUS["activeScreen"] = 6
     elif std_cmd == "IR?":

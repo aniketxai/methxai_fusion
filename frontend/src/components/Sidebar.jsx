@@ -15,6 +15,10 @@ const navItems = [
 export default function Sidebar() {
   return (
     <aside className="sidebar">
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid #1E293B', background: '#090D16' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.8px' }}>SYSTEM NAVIGATION</div>
+        <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>Node ID: ESP32-SLOT-04</div>
+      </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -33,9 +37,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="sidebar-footer">
-        <div className="sidebar-footer-label">MethXAI Platform v1.4</div>
-        <div className="sidebar-footer-sub">ESP32 Telemetry Mesh</div>
+      <div className="sidebar-footer" style={{ borderTop: '1px solid #1E293B', padding: '14px 16px', background: '#090D16' }}>
+        <div className="sidebar-footer-label" style={{ fontWeight: 600, color: '#F1F5F9', fontSize: '11px' }}>MethXAI Fusion v2.4</div>
+        <div className="sidebar-footer-sub" style={{ fontSize: '10px', color: '#64748B' }}>ESP32 UART Mesh / WHO TRS 961</div>
       </div>
     </aside>
   );

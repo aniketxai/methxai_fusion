@@ -21,16 +21,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setAppLoading(false);
-      // Welcome speech announcement
-      if ('speechSynthesis' in window) {
-        try {
-          const msg = new SpeechSynthesisUtterance("Welcome to MethXAI. Aapka MethXAI mein swagat hai.");
-          window.speechSynthesis.speak(msg);
-        } catch (e) {
-          console.log('Browser speech note:', e);
-        }
-      }
-    }, 1200);
+    }, 400);
     return () => clearTimeout(timer);
   }, []);
 

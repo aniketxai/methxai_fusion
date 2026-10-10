@@ -19,7 +19,7 @@ function getApiConfig() {
 }
 
 // Simulate network latency for mock mode
-function mockDelay(data, ms = 200) {
+function mockDelay(data, ms = 50) {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms));
 }
 

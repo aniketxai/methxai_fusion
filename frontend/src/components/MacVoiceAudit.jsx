@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mic, MicOff, Bot, Volume2, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Volume2, ShieldCheck, Activity, CheckCircle2 } from 'lucide-react';
 import { getStoredConfig } from '../utils/productStore.js';
 
 export default function MacVoiceAudit() {
@@ -28,9 +28,9 @@ export default function MacVoiceAudit() {
     };
 
     recognition.onerror = (err) => {
-      console.warn('Mac Mic recognition error:', err);
+      console.warn('Mac Mic recognition note:', err);
       setIsListening(false);
-      setError('Microphone access note. You can also type queries below.');
+      setError('Microphone status note. You can also type queries below.');
     };
 
     recognition.onend = () => {
@@ -49,7 +49,7 @@ export default function MacVoiceAudit() {
     };
   }, [isListening]);
 
-  const sendToOllama = async (textToSend) => {
+  const sendToAuditEngine = async (textToSend) => {
     const queryText = textToSend || transcript;
     if (!queryText || !queryText.trim()) return;
 
@@ -75,101 +75,113 @@ export default function MacVoiceAudit() {
       const data = await res.json();
       setOllamaResponse(data);
 
-      // Browser Web Speech fallback if needed
       if ('speechSynthesis' in window && data?.report?.patient_summary) {
         const utterance = new SpeechSynthesisUtterance(data.report.patient_summary);
         window.speechSynthesis.speak(utterance);
       }
+
+      // Automatically trigger hardware dispense sequence (M3 + Pill Rotor) if quality cleared
+      if (data?.report?.triage_priority === 'Normal') {
+        try {
+          await fetch(`${apiBase}/api/dispenser/control-motor`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: 'VOICE_DISPENSE' }),
+          });
+        } catch (e) {
+          console.warn('Voice dispense trigger note:', e);
+        }
+      }
     } catch (err) {
-      console.error('Error calling Ollama Voice Triage:', err);
-      setError('Failed to reach backend Ollama endpoint. Ensure backend server is running.');
+      console.error('Error calling Clinical Audit Engine:', err);
+      setError('Failed to reach backend Quality Assurance endpoint. Ensure backend server is running.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="panel" style={{ marginTop: 20, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+    <div className="panel" style={{ marginTop: 20, border: '1px solid #0EA5E9', background: '#0F172A', color: '#F8FAFC' }}>
       <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bot size={18} style={{ color: '#3b82f6' }} />
-          Mac Mic Voice Audit (Ollama AI)
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#F8FAFC', fontSize: '15px' }}>
+          <ShieldCheck size={18} style={{ color: '#38BDF8' }} />
+          Voice Dispatch & Clinical Quality Console
         </h2>
-        <span className="badge badge-normal" style={{ fontSize: 11, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
-          <Sparkles size={11} style={{ marginRight: 4 }} /> Powered by llama3.2:1b
+        <span className="badge badge-normal" style={{ fontSize: 11, background: '#0284C7', color: '#FFFFFF', fontWeight: 600 }}>
+          <Activity size={11} style={{ marginRight: 4 }} /> Clinical Audit Protocol v3.2
         </span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             className={`btn ${isListening ? 'btn-danger' : 'btn-primary'}`}
             onClick={() => setIsListening(!isListening)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 600 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 600, borderRadius: '6px' }}
           >
             {isListening ? (
               <>
-                <MicOff size={16} /> Listening to Mac Mic... (Click to Stop)
+                <MicOff size={16} /> Listening... (Click to Stop)
               </>
             ) : (
               <>
-                <Mic size={16} /> 🎤 Talk into Mac Microphone
+                <Mic size={16} /> Activate Microphone Dispatch
               </>
             )}
           </button>
 
           <button
             className="btn btn-secondary"
-            onClick={() => sendToOllama()}
+            onClick={() => sendToAuditEngine()}
             disabled={loading || !transcript.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0284C7', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
           >
-            {loading ? 'Ollama Analyzing...' : 'Send to Ollama AI'}
+            {loading ? 'Evaluating Quality Protocol...' : 'Run Clinical Audit'}
           </button>
         </div>
 
         {/* Live transcript input */}
         <div>
-          <label style={{ fontSize: 12, opacity: 0.8, display: 'block', marginBottom: 4 }}>
-            Voice Transcript / Audit Query:
+          <label style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginBottom: 4, fontWeight: 500 }}>
+            Voice Transcript / Quality Audit Input:
           </label>
           <input
             type="text"
             className="input"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
-            placeholder="Click 'Talk into Mac Microphone' or type query (e.g., 'Audit cold chain status for Batch B-7749')..."
-            style={{ width: '100%', padding: '8px 12px' }}
+            placeholder="Activate microphone or type audit query (e.g., 'Audit cold chain status for Batch B-7749')..."
+            style={{ width: '100%', padding: '9px 12px', background: '#020617', border: '1px solid #334155', color: '#F8FAFC', borderRadius: '6px', fontSize: '13px' }}
           />
         </div>
 
-        {error && <div style={{ color: '#ef4444', fontSize: 12 }}>{error}</div>}
+        {error && <div style={{ color: '#EF4444', fontSize: 12 }}>{error}</div>}
 
-        {/* Ollama AI Result Card */}
+        {/* Clinical Quality Audit Result Card */}
         {ollamaResponse && (
           <div
             style={{
               padding: 14,
               borderRadius: 8,
-              background: 'rgba(15, 23, 42, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: '#020617',
+              border: '1px solid #1E293B',
               marginTop: 6,
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8' }}>
-                <Volume2 size={14} /> Ollama AI Assessment (Speaking via Mac Speaker)
+              <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, color: '#38BDF8' }}>
+                <Volume2 size={14} /> Clinical Audit Decision & Audio Dispatch
               </span>
               <span
                 className={`badge ${
                   ollamaResponse.report.triage_priority === 'Normal' ? 'badge-normal' : 'badge-alert'
                 }`}
-                style={{ fontSize: 11 }}
+                style={{ fontSize: 11, padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}
               >
-                {ollamaResponse.report.triage_priority} Priority
+                {ollamaResponse.report.triage_priority} Status
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#e2e8f0' }}>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#E2E8F0' }}>
               {ollamaResponse.report.patient_summary}
             </p>
           </div>

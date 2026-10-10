@@ -67,7 +67,7 @@ const char* TRIAGE_PATH = "/triage";
 #define FIXED_AUDIO_URL "http://10.155.26.85:8000/static/patient_summary.wav"
 
 // How long to stay on Screen12 after response (ms)
-#define SCREEN12_HOLD_MS  60000UL   // 1 minute
+#define SCREEN12_HOLD_MS   3000UL   // 3s hold on Screen12 before auto-dispensing
 #define DISPENSE_DELAY_MS  3000UL   // 3s after screen6 loads
 
 // ================= JSON HELPERS =================
@@ -358,6 +358,7 @@ static lv_timer_t *gate_timer           = NULL;
 static lv_timer_t *gate_delay_timer     = NULL;
 static lv_timer_t *api_ir_timer        = NULL;
 static lv_timer_t *api_timeout_timer   = NULL;
+static lv_timer_t *api_spring_timer    = NULL;
 static lv_timer_t *api_drop_timer      = NULL;
 
 static bool        waitingForIR        = false;
@@ -375,6 +376,7 @@ static void stopIrWait() {
   if (gate_delay_timer)     { lv_timer_del(gate_delay_timer);     gate_delay_timer     = NULL; }
   if (api_ir_timer)        { lv_timer_del(api_ir_timer);        api_ir_timer        = NULL; }
   if (api_timeout_timer)   { lv_timer_del(api_timeout_timer);   api_timeout_timer   = NULL; }
+  if (api_spring_timer)    { lv_timer_del(api_spring_timer);    api_spring_timer    = NULL; }
   if (api_drop_timer)      { lv_timer_del(api_drop_timer);      api_drop_timer      = NULL; }
   waitingForIR      = false;
   apiDispenseActive = false;
@@ -398,6 +400,12 @@ static void onIrTimeout(lv_timer_t *t) {
   if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Incomplete");
   if (ui_Label14) lv_label_set_text(ui_Label14, "No product dropped at IR optical beam within 10s.");
   stopIrWait();
+  lv_timer_create([](lv_timer_t *t2){
+    if (lv_scr_act() == ui_Screen6) {
+      lv_disp_load_scr(ui_Screen2);
+    }
+    lv_timer_del(t2);
+  }, 4000, NULL);
 }
 
 static void motorScreenWaitIR_manual(const char *cmd) {
@@ -428,6 +436,7 @@ static void motorScreenWaitIR_manual(const char *cmd) {
 static void gate_open_timer_cb(lv_timer_t *t) {
   (void)t;
   sendToUNO("GATE OPEN");
+  triggerDispenseCompleteAudio();
   if (gate_timer) { lv_timer_del(gate_timer); gate_timer = NULL; }
   if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Complete!");
   if (ui_Label14) lv_label_set_text(ui_Label14, "Pill dropped & delivery gate open. Please collect your medicine.");
@@ -489,27 +498,37 @@ static void api_ir_timeout_cb(lv_timer_t *t) {
 
 static void api_drop_timer_cb(lv_timer_t *t) {
   (void)t;
-  Serial.println("API Dispense: Pill rotor indexed. Actuating drop servo (DROP)...");
+  Serial.println("Voice Dispense Step 3/3: Actuating drop servo (DROP)...");
   sendToUNO("DROP");
-  if (ui_Label14) lv_label_set_text(ui_Label14, "Pill aligned. Drop servo released into optical chute...");
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Releasing Pill Chute...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Drop servo released into optical chute...");
   if (api_drop_timer) { lv_timer_del(api_drop_timer); api_drop_timer = NULL; }
 }
 
-static void runAllMotorsAndPill() {
-  Serial.println("Running Cold-Chain Validated Motors + Pill Stepper!");
+static void api_spring_timer_cb(lv_timer_t *t) {
+  (void)t;
+  Serial.println("Voice Dispense Step 2/3: Actuating M3 Spring Motor (Spring 1)...");
   sendToUNO("M3 ON");
-  delay(100);
-  sendToUNO("M4 ON");
-  delay(100);
-  sendToUNO("R0 ON");
-  delay(100);
-  sendToUNO("R1 ON");
-  delay(100);
-  sendToUNO("STEP 512");
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Actuating M3 Spring...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Step 2/2: Spring motor releasing pill... Awaiting drop sensor.");
+  if (api_spring_timer) { lv_timer_del(api_spring_timer); api_spring_timer = NULL; }
 
-  // Actuate drop servo after pill rotor finishes rotating (2200ms)
+  // Step 3: Actuate drop servo 1500ms after spring motor turns ON
   if (api_drop_timer) { lv_timer_del(api_drop_timer); api_drop_timer = NULL; }
-  api_drop_timer = lv_timer_create(api_drop_timer_cb, 2200, NULL);
+  api_drop_timer = lv_timer_create(api_drop_timer_cb, 1500, NULL);
+}
+
+static void runAllMotorsAndPill() {
+  Serial.println("Voice Dispense Sequential Execution: Step 1 Rotor (+512) -> Step 2 Spring M3 -> Step 3 Drop Servo");
+  
+  // Step 1: Actuate Pill Rotor Stepper (+512) FIRST
+  sendToUNO("STEP 512");
+  if (ui_Label13) lv_label_set_text(ui_Label13, "Indexing Pill Rotor...");
+  if (ui_Label14) lv_label_set_text(ui_Label14, "Step 1/2: Rotating pill chamber (+512)...");
+
+  // Step 2: Actuate Spring Motor M3 2200ms AFTER Pill Rotor finishes rotating
+  if (api_spring_timer) { lv_timer_del(api_spring_timer); api_spring_timer = NULL; }
+  api_spring_timer = lv_timer_create(api_spring_timer_cb, 2200, NULL);
 }
 
 static void runMotorOnlyForMotorId(int motor) {
@@ -539,6 +558,21 @@ static void startApiDispenseSequence(int motor) {
   api_timeout_timer = lv_timer_create(api_ir_timeout_cb, API_IR_TIMEOUT_MS, NULL);
 }
 
+static void triggerDispenseCompleteAudio() {
+  Serial.println("Triggering Dispense Complete Voice Prompt...");
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient audioClient;
+    audioClient.setTimeout(500);
+    if (audioClient.connect(TRIAGE_HOST, TRIAGE_PORT)) {
+      audioClient.print("POST /api/dispenser/speak-complete HTTP/1.1\r\n");
+      audioClient.print("Host: " + String(TRIAGE_HOST) + ":" + String(TRIAGE_PORT) + "\r\n");
+      audioClient.print("Content-Length: 0\r\n");
+      audioClient.print("Connection: close\r\n\r\n");
+      audioClient.stop();
+    }
+  }
+}
+
 // =====================================================
 // UNO LINE HANDLER
 // =====================================================
@@ -552,7 +586,13 @@ static void handleUNOForIRLine(const String &line) {
     if (ui_Label14) lv_label_set_text(ui_Label14, "Product detected by IR sensor. Delivery gate opening.");
     if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
     gate_delay_timer = lv_timer_create([](lv_timer_t *t){
-      sendToUNO("GATE OPEN"); lv_timer_del(t); gate_delay_timer = NULL;
+      sendToUNO("GATE OPEN"); triggerDispenseCompleteAudio(); lv_timer_del(t); gate_delay_timer = NULL;
+      lv_timer_create([](lv_timer_t *t2){
+        if (lv_scr_act() == ui_Screen6) {
+          lv_disp_load_scr(ui_Screen2);
+        }
+        lv_timer_del(t2);
+      }, 4000, NULL);
     }, 3000, NULL);
   }
 
@@ -562,7 +602,13 @@ static void handleUNOForIRLine(const String &line) {
     if (ui_Label14) lv_label_set_text(ui_Label14, "Product detected by IR sensor. Delivery gate opening.");
     if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
     gate_delay_timer = lv_timer_create([](lv_timer_t *t){
-      sendToUNO("GATE OPEN"); lv_timer_del(t); gate_delay_timer = NULL;
+      sendToUNO("GATE OPEN"); triggerDispenseCompleteAudio(); lv_timer_del(t); gate_delay_timer = NULL;
+      lv_timer_create([](lv_timer_t *t2){
+        if (lv_scr_act() == ui_Screen6) {
+          lv_disp_load_scr(ui_Screen2);
+        }
+        lv_timer_del(t2);
+      }, 4000, NULL);
     }, 3000, NULL);
   }
 
@@ -935,8 +981,17 @@ void setup() {
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.print("Connecting WiFi");
-  while (WiFi.status() != WL_CONNECTED) { delay(300); Serial.print("."); }
-  Serial.println("\nWiFi OK: " + WiFi.localIP().toString());
+  int wifiAttempts = 0;
+  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 10) {
+    delay(300);
+    Serial.print(".");
+    wifiAttempts++;
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi OK: " + WiFi.localIP().toString());
+  } else {
+    Serial.println("\nWiFi timeout. TFT Display starting in Standalone mode.");
+  }
 
   audioUrlMutex = xSemaphoreCreateMutex();
 
@@ -997,6 +1052,15 @@ void setup() {
   // AI Triage / Audit Trigger on Screen 10
   make_clickable_and_bubble(ui_Panel23);
   lv_obj_add_event_cb(ui_Panel23, event_panel23, LV_EVENT_CLICKED, NULL);
+
+  // Screen 6 Return Home Button Handler
+  if (ui_Btn_dispense_home) {
+    lv_obj_add_event_cb(ui_Btn_dispense_home, [](lv_event_t *e) {
+      if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        lv_disp_load_scr(ui_Screen2);
+      }
+    }, LV_EVENT_CLICKED, NULL);
+  }
 }
 
 // ================= LOOP =================
@@ -1038,47 +1102,58 @@ void loop() {
     }
   }
 
-  // Periodic Telemetry & Website Motor Command Sync (every 500ms for fast responsiveness)
+  // Periodic Telemetry & Website Motor Command Sync (every 1000ms for fast responsiveness)
   static unsigned long lastTelemetrySendMs = 0;
-  if (millis() - lastTelemetrySendMs >= 500UL) {
+  static bool lastConnectFailed = false;
+  static unsigned long lastConnectFailTime = 0;
+
+  if (millis() - lastTelemetrySendMs >= 1000UL) {
     lastTelemetrySendMs = millis();
     if (WiFi.status() == WL_CONNECTED) {
-      WiFiClient telemetryClient;
-      telemetryClient.setTimeout(2000);
-      if (telemetryClient.connect(TRIAGE_HOST, TRIAGE_PORT)) {
-        String body = "{\"shipmentId\":\"SHP-2410-007\",\"batchId\":\"BTC-M1-2401\",\"temperature\":" + 
-                      String(g_cold_chain.current_temp, 1) + 
-                      ",\"humidity\":48.0,\"spo2\":98,\"heart_rate\":72,\"ir_sensor\":1,\"gate_status\":\"CLOSED\"}";
-        telemetryClient.print("POST /api/telemetry HTTP/1.1\r\n");
-        telemetryClient.print("Host: " + String(TRIAGE_HOST) + ":" + String(TRIAGE_PORT) + "\r\n");
-        telemetryClient.print("Content-Type: application/json\r\n");
-        telemetryClient.print("Content-Length: " + String(body.length()) + "\r\n");
-        telemetryClient.print("Connection: close\r\n\r\n");
-        telemetryClient.print(body);
+      if (!lastConnectFailed || (millis() - lastConnectFailTime > 5000UL)) {
+        WiFiClient telemetryClient;
+        telemetryClient.setTimeout(50);
+        if (telemetryClient.connect(TRIAGE_HOST, TRIAGE_PORT)) {
+          lastConnectFailed = false;
+          String body = "{\"shipmentId\":\"SHP-2410-007\",\"batchId\":\"BTC-M1-2401\",\"temperature\":" + 
+                        String(g_cold_chain.current_temp, 1) + 
+                        ",\"humidity\":48.0,\"spo2\":98,\"heart_rate\":72,\"ir_sensor\":1,\"gate_status\":\"CLOSED\"}";
+          telemetryClient.print("POST /api/telemetry HTTP/1.1\r\n");
+          telemetryClient.print("Host: " + String(TRIAGE_HOST) + ":" + String(TRIAGE_PORT) + "\r\n");
+          telemetryClient.print("Content-Type: application/json\r\n");
+          telemetryClient.print("Content-Length: " + String(body.length()) + "\r\n");
+          telemetryClient.print("Connection: close\r\n\r\n");
+          telemetryClient.print(body);
 
-        // Read response body from backend to check for pending motor commands from website
-        unsigned long deadline = millis() + 1000UL;
-        String resp = "";
-        while ((telemetryClient.connected() || telemetryClient.available()) && millis() < deadline) {
-          if (telemetryClient.available()) {
-            resp += (char)telemetryClient.read();
+          unsigned long deadline = millis() + 100UL;
+          String resp = "";
+          while ((telemetryClient.connected() || telemetryClient.available()) && millis() < deadline) {
+            if (telemetryClient.available()) {
+              resp += (char)telemetryClient.read();
+            }
+            delay(1);
           }
-          delay(2);
-        }
-        telemetryClient.stop();
+          telemetryClient.stop();
 
-        String pendingCmd = extractJsonString(resp, "pending_command");
-        if (pendingCmd.length() > 0) {
-          Serial.println("ESP32 Received Website Command: " + pendingCmd);
-          if (pendingCmd == "M3 ON" || pendingCmd == "M4 ON" || pendingCmd == "R0 ON" || pendingCmd == "R1 ON") {
-            motorScreenWaitIR_manual(pendingCmd.c_str());
-          } else if (pendingCmd.startsWith("STEP ")) {
-            stepperScreenAndGate(pendingCmd.c_str());
-          } else if (pendingCmd == "AUTO_TEST_ALL") {
-            btn_test_auto_all_cb(NULL);
-          } else {
-            sendToUNO(pendingCmd.c_str());
+          String pendingCmd = extractJsonString(resp, "pending_command");
+          if (pendingCmd.length() > 0) {
+            Serial.println("ESP32 Received Website Command: " + pendingCmd);
+            if (pendingCmd == "VOICE_DISPENSE" || pendingCmd == "START_API_DISPENSE") {
+              lv_disp_load_scr(ui_Screen6);
+              startApiDispenseSequence(1);
+            } else if (pendingCmd == "M3 ON" || pendingCmd == "M4 ON" || pendingCmd == "R0 ON" || pendingCmd == "R1 ON") {
+              motorScreenWaitIR_manual(pendingCmd.c_str());
+            } else if (pendingCmd.startsWith("STEP ")) {
+              stepperScreenAndGate(pendingCmd.c_str());
+            } else if (pendingCmd == "AUTO_TEST_ALL") {
+              btn_test_auto_all_cb(NULL);
+            } else {
+              sendToUNO(pendingCmd.c_str());
+            }
           }
+        } else {
+          lastConnectFailed = true;
+          lastConnectFailTime = millis();
         }
       }
     }

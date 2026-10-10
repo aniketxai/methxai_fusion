@@ -33,21 +33,28 @@ static void loading_timer_cb(lv_timer_t * timer)
 {
     LV_UNUSED(timer);
 
-    loading_value += 4;   // Smooth responsive boot loading
+    loading_value += 10;   // Fast 400ms loading bar
 
-    lv_bar_set_value(ui_barloading, loading_value, LV_ANIM_ON);
+    if (ui_barloading) {
+        lv_bar_set_value(ui_barloading, loading_value, LV_ANIM_OFF);
+    }
 
     if(loading_value >= 100)
     {
-        lv_timer_del(loading_timer);
-        loading_timer = NULL;
+        if (loading_timer) {
+            lv_timer_del(loading_timer);
+            loading_timer = NULL;
+        }
 
-        // Switch to Screen2 (Cold-Chain Home Overview) with fade animation
+        // Switch to Screen2 (Cold-Chain Home Overview)
         lv_scr_load_anim(ui_Screen2,
                          LV_SCR_LOAD_ANIM_FADE_ON,
-                         400,     // animation time
+                         200,     // animation time
                          0,       // delay
                          false);  // no auto delete
+
+        // Reset input devices so touch state targets new Screen2 immediately!
+        lv_indev_reset(NULL, NULL);
     }
 }
 
@@ -93,10 +100,12 @@ void ui_init(void)
 
     // Reset loading bar
     loading_value = 0;
-    lv_bar_set_value(ui_barloading, 0, LV_ANIM_OFF);
+    if (ui_barloading) {
+        lv_bar_set_value(ui_barloading, 0, LV_ANIM_OFF);
+    }
 
-    // Start timer (60ms interval for smooth boot)
-    loading_timer = lv_timer_create(loading_timer_cb, 60, NULL);
+    // Start loading timer (40ms interval = ~400ms fast boot)
+    loading_timer = lv_timer_create(loading_timer_cb, 40, NULL);
 }
 
 void ui_destroy(void)
