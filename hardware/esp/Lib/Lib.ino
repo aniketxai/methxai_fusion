@@ -54,12 +54,12 @@ static void sendToUNO(const char *cmd) {
 const char* WIFI_SSID = "shiv";
 const char* WIFI_PASS = "jaishivmahadev";
 
-const char* TRIAGE_HOST = "10.71.160.85";
+const char* TRIAGE_HOST = "10.155.26.85";
 const int   TRIAGE_PORT = 8000;
 const char* TRIAGE_PATH = "/triage";
 
 // Fixed audio URL — always play this after triage response
-#define FIXED_AUDIO_URL "http://10.71.160.85/static/patient_summary.wav"
+#define FIXED_AUDIO_URL "http://10.155.26.85:8000/static/patient_summary.wav"
 
 // How long to stay on Screen12 after response (ms)
 #define SCREEN12_HOLD_MS  60000UL   // 1 minute
@@ -1023,6 +1023,27 @@ void loop() {
     }
     if (ui_Chart_temp && ui_Series_temp) {
       lv_chart_set_next_value(ui_Chart_temp, ui_Series_temp, g_cold_chain.temp_history[11]);
+    }
+  }
+
+  // Periodic Telemetry to MethXAI Backend (every 5000ms)
+  static unsigned long lastTelemetrySendMs = 0;
+  if (millis() - lastTelemetrySendMs >= 5000UL) {
+    lastTelemetrySendMs = millis();
+    if (WiFi.status() == WL_CONNECTED) {
+      WiFiClient telemetryClient;
+      if (telemetryClient.connect(TRIAGE_HOST, TRIAGE_PORT)) {
+        String body = "{\"shipmentId\":\"SHP-2410-007\",\"batchId\":\"BTC-M1-2401\",\"temperature\":" + 
+                      String(g_cold_chain.current_temp, 1) + 
+                      ",\"humidity\":48.0,\"spo2\":98,\"heart_rate\":72,\"ir_sensor\":1,\"gate_status\":\"CLOSED\"}";
+        telemetryClient.print("POST /api/telemetry HTTP/1.1\r\n");
+        telemetryClient.print("Host: " + String(TRIAGE_HOST) + ":" + String(TRIAGE_PORT) + "\r\n");
+        telemetryClient.print("Content-Type: application/json\r\n");
+        telemetryClient.print("Content-Length: " + String(body.length()) + "\r\n");
+        telemetryClient.print("Connection: close\r\n\r\n");
+        telemetryClient.print(body);
+        telemetryClient.stop();
+      }
     }
   }
 

@@ -6,15 +6,30 @@ import { socketService } from '../services/socket.js';
 
 export default function Header({ onToggleSidebar }) {
   const [now, setNow] = useState(new Date());
+  const [wsConnected, setWsConnected] = useState(socketService.isConnected);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const connected = !api.isMockMode && socketService.isConnected;
-  const statusLabel = api.isMockMode ? 'TELEMETRY ONLINE' : connected ? 'HARDWARE ONLINE' : 'NODE DISCONNECTED';
-  const statusClass = api.isMockMode ? 'connected' : connected ? 'connected' : 'disconnected';
+  useEffect(() => {
+    socketService.connect();
+    const unsubscribe = socketService.subscribe((msg) => {
+      if (msg.type === 'connection_status' || msg.type === 'init') {
+        setWsConnected(socketService.isConnected);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const isApi = !api.isMockMode;
+  const statusLabel = isApi
+    ? wsConnected
+      ? 'ESP32 & BACKEND LIVE'
+      : 'BACKEND CONNECTED'
+    : 'MOCK TELEMETRY ONLINE';
+  const statusClass = 'connected';
 
   return (
     <header className="header">
@@ -62,4 +77,3 @@ export default function Header({ onToggleSidebar }) {
 Header.propTypes = {
   onToggleSidebar: PropTypes.func,
 };
-

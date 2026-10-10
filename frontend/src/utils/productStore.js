@@ -31,10 +31,10 @@ export function saveStoredProductRanges(ranges) {
 
 export function getStoredConfig() {
   const defaults = {
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
-    wsUrl: import.meta.env.VITE_WS_URL || '',
-    dataMode: (import.meta.env.VITE_API_BASE_URL ? 'api' : 'mock'),
-    refreshInterval: '10',
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://10.155.26.85:8000',
+    wsUrl: import.meta.env.VITE_WS_URL || 'ws://10.155.26.85:8000/ws',
+    dataMode: 'api',
+    refreshInterval: '5',
     operatorName: 'Aniket S. (Logistics Lead)',
     operatorId: 'OP-001',
   };
