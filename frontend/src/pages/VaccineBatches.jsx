@@ -1,8 +1,9 @@
 // Vaccine Batches — inventory with cold-chain status, excursion history, release/hold
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, AlertTriangle } from 'lucide-react';
+import { Search, AlertTriangle, Cpu } from 'lucide-react';
 import { useBatches } from '../hooks/useApi.js';
+import { api } from '../services/api.js';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateViews.jsx';
 import { formatDate, formatDateTime } from '../utils/format.js';
 
@@ -142,6 +143,33 @@ export default function VaccineBatches() {
               <li><span className="key">Cold-Chain Status</span><span className="val">{selectedBatch.coldChainStatus}</span></li>
               <li><span className="key">Release/Hold</span><span className="val">{selectedBatch.releaseStatus}</span></li>
             </ul>
+
+            {/* Actuate Dispense Motor Button */}
+            <div style={{ marginBottom: 16 }}>
+              <button 
+                onClick={async () => {
+                  const motorMap = {
+                    'Medicine M1': 'M3 ON',
+                    'Medicine M2': 'M4 ON',
+                    'Medicine M3': 'R0 ON',
+                    'Medicine M4': 'R1 ON',
+                    'Medicine M5': 'STEP 512',
+                    'Medicine M6': 'STEP -512'
+                  };
+                  const cmd = motorMap[selectedBatch.product] || 'M3 ON';
+                  try {
+                    await api.controlMotor(cmd);
+                    alert(`Dispense Command '${cmd}' dispatched to ESP32 / Arduino Uno for ${selectedBatch.batchId}`);
+                  } catch (e) {
+                    alert(`Dispense Blocked: ${e.message}`);
+                  }
+                }}
+                className="btn btn-primary" 
+                style={{ width: '100%', padding: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              >
+                <Cpu size={16} /> Dispense {selectedBatch.batchId} via ESP32 Motor
+              </button>
+            </div>
 
             {/* Viability-risk estimation */}
             <div className="panel mb-16">

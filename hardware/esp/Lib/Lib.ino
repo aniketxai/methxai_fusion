@@ -44,8 +44,13 @@ HardwareSerial UNO(2);
 #define UNO_TX 17
 
 static void sendToUNO(const char *cmd) {
-  UNO.print(cmd);
-  UNO.print("\n");
+  String c = String(cmd);
+  c.trim();
+  if (c.length() > 0 && c != "STOP" && c != "IR?" && c != "START") {
+    UNO.println("START");
+    delay(30);
+  }
+  UNO.println(cmd);
   Serial.print("ESP32 >> UNO: ");
   Serial.println(cmd);
 }
@@ -344,27 +349,51 @@ static void make_clickable_and_bubble(lv_obj_t *obj) {
 }
 
 // =====================================================
-// MANUAL BUTTON 5-8 IR FLOW (WITH COLD CHAIN LOCK)
+// MANUAL & API MOTOR DISPENSE TIMERS & CLEANUP
 // =====================================================
-static lv_timer_t *ir_timer      = NULL;
-static lv_timer_t *timeout_timer = NULL;
-static bool        waitingForIR  = false;
+static lv_timer_t *ir_timer            = NULL;
+static lv_timer_t *timeout_timer       = NULL;
+static lv_timer_t *stepper_drop_timer   = NULL;
+static lv_timer_t *gate_timer           = NULL;
+static lv_timer_t *gate_delay_timer     = NULL;
+static lv_timer_t *api_ir_timer        = NULL;
+static lv_timer_t *api_timeout_timer   = NULL;
+static lv_timer_t *api_drop_timer      = NULL;
+
+static bool        waitingForIR        = false;
+static bool        apiDispenseActive   = false;
+static int         apiMotorId          = -1;
 
 #define IR_POLL_MS    200
 #define IR_TIMEOUT_MS 10000
 
 static void stopIrWait() {
-  if (ir_timer)      { lv_timer_del(ir_timer);      ir_timer      = NULL; }
-  if (timeout_timer) { lv_timer_del(timeout_timer); timeout_timer = NULL; }
-  waitingForIR = false;
+  if (ir_timer)            { lv_timer_del(ir_timer);            ir_timer            = NULL; }
+  if (timeout_timer)       { lv_timer_del(timeout_timer);       timeout_timer       = NULL; }
+  if (stepper_drop_timer)   { lv_timer_del(stepper_drop_timer);   stepper_drop_timer   = NULL; }
+  if (gate_timer)           { lv_timer_del(gate_timer);           gate_timer           = NULL; }
+  if (gate_delay_timer)     { lv_timer_del(gate_delay_timer);     gate_delay_timer     = NULL; }
+  if (api_ir_timer)        { lv_timer_del(api_ir_timer);        api_ir_timer        = NULL; }
+  if (api_timeout_timer)   { lv_timer_del(api_timeout_timer);   api_timeout_timer   = NULL; }
+  if (api_drop_timer)      { lv_timer_del(api_drop_timer);      api_drop_timer      = NULL; }
+  waitingForIR      = false;
+  apiDispenseActive = false;
+  apiMotorId        = -1;
+}
+
+static void apiStopIrWait() {
+  stopIrWait();
 }
 
 static void ir_poll_timer_cb(lv_timer_t *t) { (void)t; sendToUNO("IR?"); }
 
 static void onIrTimeout(lv_timer_t *t) {
   (void)t;
-  Serial.println("IR TIMEOUT");
-  sendToUNO("STOP");
+  Serial.println("IR TIMEOUT: Safely stopping active motors");
+  sendToUNO("M3 OFF");
+  sendToUNO("M4 OFF");
+  sendToUNO("R0 OFF");
+  sendToUNO("R1 OFF");
   lv_disp_load_scr(ui_Screen6);
   if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Incomplete");
   if (ui_Label14) lv_label_set_text(ui_Label14, "No product dropped at IR optical beam within 10s.");
@@ -382,6 +411,8 @@ static void motorScreenWaitIR_manual(const char *cmd) {
   }
 
   stopIrWait();
+  sendToUNO("START"); // Ensure Uno system is auto-armed
+  delay(30);
   sendToUNO(cmd);
   lv_disp_load_scr(ui_Screen6);
   if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing in Progress...");
@@ -394,10 +425,6 @@ static void motorScreenWaitIR_manual(const char *cmd) {
 // =====================================================
 // MANUAL BUTTON 9-10 STEPPER FLOW (WITH COLD CHAIN LOCK)
 // =====================================================
-static lv_timer_t *stepper_drop_timer = NULL;
-static lv_timer_t *gate_timer         = NULL;
-static lv_timer_t *gate_delay_timer   = NULL;
-
 static void gate_open_timer_cb(lv_timer_t *t) {
   (void)t;
   sendToUNO("GATE OPEN");
@@ -429,49 +456,35 @@ static void stepperScreenAndGate(const char *stepCmd) {
   }
 
   stopIrWait();
-  if (stepper_drop_timer) { lv_timer_del(stepper_drop_timer); stepper_drop_timer = NULL; }
-  if (gate_timer)         { lv_timer_del(gate_timer);         gate_timer         = NULL; }
-
-  // 1. Actuate Pill Rotor Stepper
+  sendToUNO("START"); // Ensure Uno system is auto-armed
+  delay(30);
   sendToUNO(stepCmd);
   lv_disp_load_scr(ui_Screen6);
   if (ui_Label13) lv_label_set_text(ui_Label13, "Indexing Pill Rotor...");
   if (ui_Label14) lv_label_set_text(ui_Label14, "Actuating stepper rotor chamber... Awaiting drop.");
 
-  // 2. After pill rotor completes rotation (2000ms), actuate drop servo motor
   stepper_drop_timer = lv_timer_create(stepper_drop_timer_cb, 2000, NULL);
 }
 
 // =====================================================
 // API DISPENSE SEQUENCE (WITH COLD CHAIN LOCK)
 // =====================================================
-static bool        apiDispenseActive  = false;
-static int         apiMotorId         = -1;
-static lv_timer_t *api_ir_timer       = NULL;
-static lv_timer_t *api_timeout_timer  = NULL;
-static lv_timer_t *api_drop_timer     = NULL;
-
 #define API_IR_POLL_MS    200
 #define API_IR_TIMEOUT_MS 10000
-
-static void apiStopIrWait() {
-  if (api_ir_timer)      { lv_timer_del(api_ir_timer);      api_ir_timer      = NULL; }
-  if (api_timeout_timer) { lv_timer_del(api_timeout_timer); api_timeout_timer = NULL; }
-  if (api_drop_timer)    { lv_timer_del(api_drop_timer);    api_drop_timer    = NULL; }
-  apiDispenseActive = false;
-  apiMotorId        = -1;
-}
 
 static void api_ir_poll_cb(lv_timer_t *t)    { (void)t; sendToUNO("IR?"); }
 
 static void api_ir_timeout_cb(lv_timer_t *t) {
   (void)t;
-  Serial.println("API IR TIMEOUT");
-  sendToUNO("STOP");
+  Serial.println("API IR TIMEOUT: Safely stopping active motors");
+  sendToUNO("M3 OFF");
+  sendToUNO("M4 OFF");
+  sendToUNO("R0 OFF");
+  sendToUNO("R1 OFF");
   lv_disp_load_scr(ui_Screen6);
   if (ui_Label13) lv_label_set_text(ui_Label13, "Dispensing Incomplete");
   if (ui_Label14) lv_label_set_text(ui_Label14, "No product dropped at IR optical beam within 10s.");
-  apiStopIrWait();
+  stopIrWait();
 }
 
 static void api_drop_timer_cb(lv_timer_t *t) {
@@ -513,9 +526,8 @@ static void startApiDispenseSequence(int motor) {
   }
 
   stopIrWait();
-  if (gate_timer)       { lv_timer_del(gate_timer);       gate_timer       = NULL; }
-  if (gate_delay_timer) { lv_timer_del(gate_delay_timer); gate_delay_timer = NULL; }
-  apiStopIrWait();
+  sendToUNO("START"); // Auto-arm Uno system before API dispense
+  delay(30);
 
   sendToUNO("GATE CLOSE");
   delay(50);
@@ -1026,12 +1038,13 @@ void loop() {
     }
   }
 
-  // Periodic Telemetry to MethXAI Backend (every 5000ms)
+  // Periodic Telemetry & Website Motor Command Sync (every 500ms for fast responsiveness)
   static unsigned long lastTelemetrySendMs = 0;
-  if (millis() - lastTelemetrySendMs >= 5000UL) {
+  if (millis() - lastTelemetrySendMs >= 500UL) {
     lastTelemetrySendMs = millis();
     if (WiFi.status() == WL_CONNECTED) {
       WiFiClient telemetryClient;
+      telemetryClient.setTimeout(2000);
       if (telemetryClient.connect(TRIAGE_HOST, TRIAGE_PORT)) {
         String body = "{\"shipmentId\":\"SHP-2410-007\",\"batchId\":\"BTC-M1-2401\",\"temperature\":" + 
                       String(g_cold_chain.current_temp, 1) + 
@@ -1042,7 +1055,31 @@ void loop() {
         telemetryClient.print("Content-Length: " + String(body.length()) + "\r\n");
         telemetryClient.print("Connection: close\r\n\r\n");
         telemetryClient.print(body);
+
+        // Read response body from backend to check for pending motor commands from website
+        unsigned long deadline = millis() + 1000UL;
+        String resp = "";
+        while ((telemetryClient.connected() || telemetryClient.available()) && millis() < deadline) {
+          if (telemetryClient.available()) {
+            resp += (char)telemetryClient.read();
+          }
+          delay(2);
+        }
         telemetryClient.stop();
+
+        String pendingCmd = extractJsonString(resp, "pending_command");
+        if (pendingCmd.length() > 0) {
+          Serial.println("ESP32 Received Website Command: " + pendingCmd);
+          if (pendingCmd == "M3 ON" || pendingCmd == "M4 ON" || pendingCmd == "R0 ON" || pendingCmd == "R1 ON") {
+            motorScreenWaitIR_manual(pendingCmd.c_str());
+          } else if (pendingCmd.startsWith("STEP ")) {
+            stepperScreenAndGate(pendingCmd.c_str());
+          } else if (pendingCmd == "AUTO_TEST_ALL") {
+            btn_test_auto_all_cb(NULL);
+          } else {
+            sendToUNO(pendingCmd.c_str());
+          }
+        }
       }
     }
   }

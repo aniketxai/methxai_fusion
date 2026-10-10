@@ -100,3 +100,12 @@ class SocketService {
 }
 
 export const socketService = new SocketService();
+
+export function initSocket() {
+  socketService.connect();
+}
+
+export function subscribeToSocket(callback) {
+  return socketService.subscribe(callback);
+}
+

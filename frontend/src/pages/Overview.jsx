@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Truck, AlertTriangle, PackageSearch, MapPin, Activity, CheckCircle, ArrowRight,
+  Truck, AlertTriangle, PackageSearch, MapPin, Activity, CheckCircle, ArrowRight, Cpu,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, ReferenceLine,
@@ -90,6 +90,24 @@ export default function Overview() {
 
       {/* Mac Microphone Voice Audit (Ollama AI) */}
       <MacVoiceAudit />
+
+      {/* LVGL & Motor Control Quick Terminal Callout */}
+      <div style={{ background: '#0F172A', border: '1px solid #0EA5E9', borderRadius: '12px', padding: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h3 style={{ margin: 0, color: '#F8FAFC', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Cpu size={20} color="#38BDF8" /> LVGL Display Mirror & Website Motor Control Terminal
+          </h3>
+          <p style={{ margin: '4px 0 0 0', color: '#94A3B8', fontSize: '12.5px' }}>
+            Full 14-screen LVGL TFT simulator, bi-directional ESP32 UART motor actuation (M3, M4, Relays, Stepper, Gate), and live sensor diagnostics.
+          </p>
+        </div>
+        <button 
+          onClick={() => navigate('/lvgl-control')}
+          style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          Open LVGL Motor Workbench →
+        </button>
+      </div>
 
       {/* Temperature trend + recent alerts */}
       <div className="grid-2">

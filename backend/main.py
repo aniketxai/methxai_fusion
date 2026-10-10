@@ -37,6 +37,18 @@ generate_patient_summary_wav(DEFAULT_AUDIO_PATH)
 
 app.mount("/static", StaticFiles(directory=OS_STATIC_DIR), name="static")
 
+@app.on_event("startup")
+async def startup_event():
+    welcome_text = "Welcome to MethXAI. Aapka MethXAI mein swagat hai."
+    print(f"\n============================================================")
+    print(f"📢 {welcome_text}")
+    print(f"============================================================\n")
+    try:
+        import subprocess
+        subprocess.Popen(["say", welcome_text])
+    except Exception as e:
+        print(f"Startup speech note: {e}")
+
 # =====================================================================
 # IN-MEMORY DATA STORE & REAL-TIME STATE
 # =====================================================================
@@ -65,13 +77,17 @@ DISPENSER_STATUS = {
     "gateStatus": "CLOSED",
     "irBeamStatus": "CLEAR",
     "currentTemp": 3.8,
+    "activeScreen": 14,
+    "motorState": "IDLE",
+    "lastCommand": None,
+    "pendingCommand": None,
     "slots": [
-        {"id": 1, "product": "Medicine M1", "motor": "M3 (Spring 1)", "batch": "BTC-M1-2401", "status": "READY", "stock": 14},
-        {"id": 2, "product": "Medicine M2", "motor": "M4 (Spring 2)", "batch": "BTC-M2-2403", "status": "READY", "stock": 8},
-        {"id": 3, "product": "Medicine M3", "motor": "R0 (Relay 1)", "batch": "BTC-M3-2401", "status": "READY", "stock": 20},
-        {"id": 4, "product": "Medicine M4", "motor": "R1 (Relay 2)", "batch": "BTC-M4-2402", "status": "QUALITY_HOLD", "stock": 5},
-        {"id": 5, "product": "Medicine M5", "motor": "STEPPER FWD (+512)", "batch": "BTC-M5-2401", "status": "READY", "stock": 30},
-        {"id": 6, "product": "Medicine M6", "motor": "STEPPER REV (-512)", "batch": "BTC-M6-2312", "status": "READY", "stock": 12},
+        {"id": 1, "product": "Medicine M1", "motor": "M3 (Spring 1)", "cmd": "M3 ON", "batch": "BTC-M1-2401", "status": "READY", "stock": 14},
+        {"id": 2, "product": "Medicine M2", "motor": "M4 (Spring 2)", "cmd": "M4 ON", "batch": "BTC-M2-2403", "status": "READY", "stock": 8},
+        {"id": 3, "product": "Medicine M3", "motor": "R0 (Relay 1)", "cmd": "R0 ON", "batch": "BTC-M3-2401", "status": "READY", "stock": 20},
+        {"id": 4, "product": "Medicine M4", "motor": "R1 (Relay 2)", "cmd": "R1 ON", "batch": "BTC-M4-2402", "status": "QUALITY_HOLD", "stock": 5},
+        {"id": 5, "product": "Medicine M5", "motor": "STEPPER FWD (+512)", "cmd": "STEP 512", "batch": "BTC-M5-2401", "status": "READY", "stock": 30},
+        {"id": 6, "product": "Medicine M6", "motor": "STEPPER REV (-512)", "cmd": "STEP -512", "batch": "BTC-M6-2312", "status": "READY", "stock": 12},
     ]
 }
 
@@ -439,7 +455,12 @@ async def receive_esp32_telemetry(telemetry: ESP32TelemetryRequest):
     }
     await ws_manager.broadcast(payload)
 
-    return {"status": "telemetry_received", "excursion": excursion}
+    pending_cmd = DISPENSER_STATUS.pop("pendingCommand", None)
+    return {
+        "status": "telemetry_received",
+        "excursion": excursion,
+        "pending_command": pending_cmd
+    }
 
 # =====================================================================
 # REST API ENDPOINTS FOR FRONTEND DASHBOARD
@@ -529,6 +550,116 @@ async def verify_batch(req: VerifyBatchRequest):
         "message": f"Batch {req.batchId} is {batch['releaseStatus']}",
         "currentTemp": batch["currentTemp"],
         "isSimulated": False
+    }
+
+class MotorControlRequest(BaseModel):
+    command: str
+    slotId: Optional[int] = None
+    overrideLock: Optional[bool] = False
+
+class LvglScreenRequest(BaseModel):
+    screen: int
+
+@app.post("/api/dispenser/control-motor")
+async def control_dispenser_motor(req: MotorControlRequest):
+    cmd = req.command.upper().strip()
+    
+    # Standardize command aliases
+    command_map = {
+        "M3_ON": "M3 ON", "M3_OFF": "M3 OFF",
+        "M4_ON": "M4 ON", "M4_OFF": "M4 OFF",
+        "R0_ON": "R0 ON", "R0_OFF": "R0 OFF",
+        "R1_ON": "R1 ON", "R1_OFF": "R1 OFF",
+        "STEPPER_FWD": "STEP 512", "STEPPER_REV": "STEP -512",
+        "DROP_SERVO": "DROP", "GATE_OPEN": "GATE OPEN", "GATE_CLOSE": "GATE CLOSE",
+        "ESTOP": "STOP", "ARM": "START", "POLL_IR": "IR?"
+    }
+    std_cmd = command_map.get(cmd, cmd)
+
+    # Cold chain integrity check for dispense actions
+    if any(k in std_cmd for k in ["M3 ON", "M4 ON", "R0 ON", "R1 ON", "STEP 512"]) and not req.overrideLock:
+        active_batch = next((b for b in BATCHES if b["batchId"] == "BTC-M4-2402"), None)
+        if active_batch and active_batch["releaseStatus"] == "HOLD" and req.slotId == 4:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cold Chain Security Lock: Batch {active_batch['batchId']} is in HOLD status ({active_batch['holdReason']}). Set override lock to run diagnostic test."
+            )
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    DISPENSER_STATUS["lastCommand"] = std_cmd
+    DISPENSER_STATUS["lastPing"] = now_iso
+    DISPENSER_STATUS["pendingCommand"] = std_cmd
+
+    # Update state reflections
+    if std_cmd == "GATE OPEN":
+        DISPENSER_STATUS["gateStatus"] = "OPEN"
+        DISPENSER_STATUS["motorState"] = "IDLE"
+    elif std_cmd == "GATE CLOSE":
+        DISPENSER_STATUS["gateStatus"] = "CLOSED"
+        DISPENSER_STATUS["motorState"] = "IDLE"
+    elif std_cmd == "STOP":
+        DISPENSER_STATUS["motorState"] = "EMERGENCY_STOP"
+        DISPENSER_STATUS["gateStatus"] = "CLOSED"
+    elif std_cmd == "START":
+        DISPENSER_STATUS["motorState"] = "IDLE"
+    elif std_cmd == "AUTO_TEST_ALL":
+        DISPENSER_STATUS["motorState"] = "AUTO_TESTING"
+        DISPENSER_STATUS["activeScreen"] = 14
+    elif any(k in std_cmd for k in ["ON", "STEP", "DROP"]):
+        DISPENSER_STATUS["motorState"] = "DISPENSING"
+        DISPENSER_STATUS["activeScreen"] = 6
+    elif std_cmd == "IR?":
+        DISPENSER_STATUS["irBeamStatus"] = "POLLED"
+
+    log_entry = {
+        "timestamp": now_iso,
+        "command": std_cmd,
+        "executedBy": "Web Interface",
+        "status": "DISPATCHED",
+        "motorState": DISPENSER_STATUS["motorState"]
+    }
+    
+    # Broadcast to all frontend & ESP32 WebSocket listeners
+    await ws_manager.broadcast({
+        "type": "motor_command_executed",
+        "data": {
+            "command": std_cmd,
+            "dispenserStatus": DISPENSER_STATUS,
+            "log": log_entry
+        }
+    })
+
+    return {
+        "success": True,
+        "command": std_cmd,
+        "message": f"Command '{std_cmd}' dispatched to ESP32 / Arduino Uno",
+        "dispenserStatus": DISPENSER_STATUS
+    }
+
+@app.post("/api/lvgl/screen")
+async def set_lvgl_screen(req: LvglScreenRequest):
+    if req.screen < 1 or req.screen > 14:
+        raise HTTPException(status_code=400, detail="Invalid screen number (must be 1 to 14)")
+    DISPENSER_STATUS["activeScreen"] = req.screen
+    await ws_manager.broadcast({
+        "type": "lvgl_screen_changed",
+        "data": {
+            "screen": req.screen,
+            "dispenserStatus": DISPENSER_STATUS
+        }
+    })
+    return {"success": True, "activeScreen": req.screen}
+
+@app.get("/api/lvgl/state")
+async def get_lvgl_state():
+    return {
+        "activeScreen": DISPENSER_STATUS.get("activeScreen", 14),
+        "dispenserStatus": DISPENSER_STATUS,
+        "currentTemp": DISPENSER_STATUS.get("currentTemp", 3.8),
+        "gateStatus": DISPENSER_STATUS.get("gateStatus", "CLOSED"),
+        "irBeamStatus": DISPENSER_STATUS.get("irBeamStatus", "CLEAR"),
+        "motorState": DISPENSER_STATUS.get("motorState", "IDLE"),
+        "lastCommand": DISPENSER_STATUS.get("lastCommand", None)
     }
 
 # =====================================================================

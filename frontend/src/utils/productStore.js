@@ -30,9 +30,24 @@ export function saveStoredProductRanges(ranges) {
 }
 
 export function getStoredConfig() {
+  const host = (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== '10.155.26.85')
+    ? window.location.hostname
+    : 'localhost';
+
+  const envApi = import.meta.env.VITE_API_BASE_URL;
+  const envWs = import.meta.env.VITE_WS_URL;
+
+  const defaultApiBase = (envApi && !envApi.includes('10.155.26.85'))
+    ? envApi
+    : `http://${host}:8000`;
+
+  const defaultWsUrl = (envWs && !envWs.includes('10.155.26.85'))
+    ? envWs
+    : `ws://${host}:8000/ws`;
+
   const defaults = {
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://10.155.26.85:8000',
-    wsUrl: import.meta.env.VITE_WS_URL || 'ws://10.155.26.85:8000/ws',
+    apiBaseUrl: defaultApiBase,
+    wsUrl: defaultWsUrl,
     dataMode: 'api',
     refreshInterval: '5',
     operatorName: 'Aniket S. (Logistics Lead)',
@@ -40,7 +55,16 @@ export function getStoredConfig() {
   };
   try {
     const stored = localStorage.getItem(CONFIG_KEY);
-    if (stored) return { ...defaults, ...JSON.parse(stored) };
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.apiBaseUrl && parsed.apiBaseUrl.includes('10.155.26.85')) {
+        parsed.apiBaseUrl = defaultApiBase;
+      }
+      if (parsed.wsUrl && parsed.wsUrl.includes('10.155.26.85')) {
+        parsed.wsUrl = defaultWsUrl;
+      }
+      return { ...defaults, ...parsed };
+    }
   } catch (e) {
     console.warn('Failed to parse stored config:', e);
   }

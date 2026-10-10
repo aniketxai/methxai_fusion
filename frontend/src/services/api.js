@@ -28,14 +28,33 @@ async function apiRequest(path, options = {}) {
   if (isMock) {
     return null; // caller handles mock fallback
   }
-  const res = await fetch(`${baseUrl}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
-  if (!res.ok) {
-    throw new Error(`API ${res.status}: ${res.statusText}`);
+  
+  try {
+    const res = await fetch(`${baseUrl}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+    if (!res.ok) {
+      throw new Error(`API ${res.status}: ${res.statusText}`);
+    }
+    return await res.json();
+  } catch (err) {
+    // Attempt fallback to local server host if primary baseUrl fails
+    const fallbackHost = (typeof window !== 'undefined' && window.location.hostname) ? window.location.hostname : 'localhost';
+    const fallbackUrl = `http://${fallbackHost}:8000${path}`;
+    if (baseUrl !== `http://${fallbackHost}:8000`) {
+      try {
+        const res = await fetch(fallbackUrl, {
+          headers: { 'Content-Type': 'application/json', ...options.headers },
+          ...options,
+        });
+        if (res.ok) return await res.json();
+      } catch (e) {
+        // ignore secondary fallback error
+      }
+    }
+    throw err;
   }
-  return res.json();
 }
 
 export const api = {
@@ -145,6 +164,62 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ batchId }),
     });
+  },
+
+  async controlMotor(command, slotId = null, overrideLock = false) {
+    if (this.isMockMode) {
+      const cmd = command.toUpperCase();
+      let gateStatus = DISPENSER_STATUS.gateStatus || 'CLOSED';
+      let motorState = 'IDLE';
+
+      if (cmd.includes('GATE OPEN')) gateStatus = 'OPEN';
+      if (cmd.includes('GATE CLOSE')) gateStatus = 'CLOSED';
+      if (cmd.includes('STOP')) { motorState = 'EMERGENCY_STOP'; gateStatus = 'CLOSED'; }
+      if (cmd.includes('START')) motorState = 'IDLE';
+      if (cmd.includes('ON') || cmd.includes('STEP') || cmd.includes('DROP')) motorState = 'DISPENSING';
+      if (cmd.includes('AUTO_TEST')) motorState = 'AUTO_TESTING';
+
+      DISPENSER_STATUS.gateStatus = gateStatus;
+      DISPENSER_STATUS.motorState = motorState;
+      DISPENSER_STATUS.lastCommand = cmd;
+
+      return mockDelay({
+        success: true,
+        command: cmd,
+        message: `[Simulated] Dispatched command '${cmd}' to ESP32 / Arduino Uno`,
+        dispenserStatus: { ...DISPENSER_STATUS }
+      });
+    }
+    return apiRequest('/api/dispenser/control-motor', {
+      method: 'POST',
+      body: JSON.stringify({ command, slotId, overrideLock }),
+    });
+  },
+
+  async setLvglScreen(screen) {
+    if (this.isMockMode) {
+      DISPENSER_STATUS.activeScreen = screen;
+      return mockDelay({ success: true, activeScreen: screen });
+    }
+    return apiRequest('/api/lvgl/screen', {
+      method: 'POST',
+      body: JSON.stringify({ screen }),
+    });
+  },
+
+  async getLvglState() {
+    if (this.isMockMode) {
+      return mockDelay({
+        activeScreen: DISPENSER_STATUS.activeScreen || 14,
+        dispenserStatus: DISPENSER_STATUS,
+        currentTemp: 3.8,
+        gateStatus: DISPENSER_STATUS.gateStatus || 'CLOSED',
+        irBeamStatus: 'CLEAR',
+        motorState: DISPENSER_STATUS.motorState || 'IDLE',
+        lastCommand: DISPENSER_STATUS.lastCommand || null,
+      });
+    }
+    return apiRequest('/api/lvgl/state');
   },
 };
 

@@ -11,6 +11,7 @@ import VaccineBatches from './pages/VaccineBatches.jsx';
 import CheckpointsAlerts from './pages/CheckpointsAlerts.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
+import LVGLMotorControl from './pages/LVGLMotorControl.jsx';
 import './styles/global.css';
 
 function App() {
@@ -20,6 +21,15 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setAppLoading(false);
+      // Welcome speech announcement
+      if ('speechSynthesis' in window) {
+        try {
+          const msg = new SpeechSynthesisUtterance("Welcome to MethXAI. Aapka MethXAI mein swagat hai.");
+          window.speechSynthesis.speak(msg);
+        } catch (e) {
+          console.log('Browser speech note:', e);
+        }
+      }
     }, 1200);
     return () => clearTimeout(timer);
   }, []);
@@ -44,6 +54,7 @@ function App() {
         <main className="app-content">
           <Routes>
             <Route path="/" element={<Overview />} />
+            <Route path="/lvgl-control" element={<LVGLMotorControl />} />
             <Route path="/shipments" element={<LiveShipments />} />
             <Route path="/shipments/:id" element={<ShipmentDetail />} />
             <Route path="/temperature" element={<TemperatureMonitoring />} />

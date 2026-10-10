@@ -56,7 +56,8 @@ export default function MacVoiceAudit() {
     setLoading(true);
     setError('');
     const config = getStoredConfig();
-    const apiBase = config.apiBaseUrl || 'http://10.155.26.85:8000';
+    const defaultHost = (typeof window !== 'undefined' && window.location.hostname) ? window.location.hostname : 'localhost';
+    const apiBase = config.apiBaseUrl || `http://${defaultHost}:8000`;
 
     try {
       const res = await fetch(`${apiBase}/api/voice-triage`, {

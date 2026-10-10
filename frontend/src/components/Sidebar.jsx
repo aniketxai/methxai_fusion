@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Truck, Thermometer, Package, Bell, FileText, Settings } from 'lucide-react';
+import { LayoutGrid, Truck, Thermometer, Package, Bell, FileText, Settings, Cpu } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
+  { to: '/lvgl-control', label: 'LVGL & Motor Control', icon: Cpu },
   { to: '/shipments', label: 'Live Shipments', icon: Truck },
   { to: '/temperature', label: 'Temperature Monitoring', icon: Thermometer },
   { to: '/batches', label: 'Vaccine Batches', icon: Package },
