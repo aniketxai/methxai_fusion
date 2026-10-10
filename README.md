@@ -34,11 +34,11 @@ MethXAI Fusion provides continuous monitoring, automated hold placement on compr
 
 ### Front View (Dispensing Unit & LVGL GUI)
 
-![MethXAI Fusion Prototype Front View](docs/assets/prototype_front.jpg)
+![MethXAI Fusion Prototype Front View](docs/assets/front.jpeg)
 
 ### Back View (Microcontroller Layout & Wiring)
 
-![MethXAI Fusion Prototype Back View](docs/assets/prototype_back.jpg)
+![MethXAI Fusion Prototype Back View](docs/assets/back.jpeg)
 
 ---
 
